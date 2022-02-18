@@ -3,6 +3,9 @@ project(mage-game-engine)
 
 set(CMAKE_CXX_STANDARD 17)
 find_package(Vulkan REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
+set(GLFW_LIB glfw)
+message(STATUS "Found GLFW")
 
 file(GLOB_RECURSE SOURCES ./src/*.cpp)
 add_executable(mage-game-engine ${SOURCES})

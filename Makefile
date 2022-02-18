@@ -153,6 +153,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mage-game-engine.dir/build.make CMakeFiles/mage-game-engine.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/test-window.o: src/test-window.cpp.o
+.PHONY : src/test-window.o
+
+# target to build an object file
+src/test-window.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mage-game-engine.dir/build.make CMakeFiles/mage-game-engine.dir/src/test-window.cpp.o
+.PHONY : src/test-window.cpp.o
+
+src/test-window.i: src/test-window.cpp.i
+.PHONY : src/test-window.i
+
+# target to preprocess a source file
+src/test-window.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mage-game-engine.dir/build.make CMakeFiles/mage-game-engine.dir/src/test-window.cpp.i
+.PHONY : src/test-window.cpp.i
+
+src/test-window.s: src/test-window.cpp.s
+.PHONY : src/test-window.s
+
+# target to generate assembly for a file
+src/test-window.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mage-game-engine.dir/build.make CMakeFiles/mage-game-engine.dir/src/test-window.cpp.s
+.PHONY : src/test-window.cpp.s
+
 src/window-resources/window.o: src/window-resources/window.cpp.o
 .PHONY : src/window-resources/window.o
 
@@ -189,6 +213,9 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/test-window.o"
+	@echo "... src/test-window.i"
+	@echo "... src/test-window.s"
 	@echo "... src/window-resources/window.o"
 	@echo "... src/window-resources/window.i"
 	@echo "... src/window-resources/window.s"

@@ -1,11 +1,9 @@
 #include "test-window.hpp"
 
-namespace mage {
+using namespace mage;
 
-	void TestWindow::run(){
-		while(!window.close_window()){
-			glfwPollEvents();
-		}
+void TestWindow::run(){
+	while(!test_window.close_window()){
+		glfwPollEvents();
 	}
-
 }

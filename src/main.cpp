@@ -7,7 +7,6 @@
 int main() {
 
 	mage::TestWindow program{};
-
 	program.run();
 
 }
