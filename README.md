@@ -4,9 +4,9 @@ _MAGE_ (MAGE Amazing Game Engine) is the final senior project of Jordan Scharkey
 
 ## Dependencies and Compiling
 
-#### Vulkan
+#### Vulkan and GLFW
 
-Vulkan drivers for whichever operating system you are using will be required. You can find out more regarding this [here.](https://www.vulkan.org/tools#vulkan-gpu-resources)
+Vulkan drivers for whichever operating system you are using will be required. You can find out more regarding this [here.](https://www.vulkan.org/tools#vulkan-gpu-resources) You will also need GLFW, a library that helps with window creation. You can read about that, along with additional dependency setup, [here.](https://vulkan-tutorial.com/Development_environment)
 
 #### Using CMake to Build
 
@@ -16,7 +16,7 @@ On Linux, this can be achieved by using the following commands:
 
 ` > cd /path/to/cloned/repository/ `
 
-` > cmake `
+` > cmake .`
 
 ` > make `
 
@@ -37,3 +37,7 @@ I hope to achieve the following milestones before my Senior Project Day:
 * Create a basic tutorial displaying the above features
 
 I also hope to achieve this with as much cross-platform support as possible, but seeing as I'm developing on an NVIDIA-driven Linux machine, these particular systems will recieve precidence if time becomes an issue.
+
+## Contact
+
+You can reach out to me at my university email, [j_scharkey@u.pacific.edu.](mailto:j_scharkey@u.pacific.edu)
