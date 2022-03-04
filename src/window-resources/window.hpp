@@ -4,8 +4,16 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
+#include <optional>
 
 namespace mage {
+
+	struct QueueIndices {
+	    std::optional<uint32_t> graphics_family;
+	    bool complete() {
+	        return graphics_family.has_value();
+	    }
+	};
 
 	class Window {
 	private:
@@ -22,8 +30,9 @@ namespace mage {
 		bool close_window();
 		void init_vulkan_instance();
 		void select_hardware();
-		void logical_device();
-		uint32_t queue_families(VkPhysicalDevice device);
+		bool suitable_device(VkPhysicalDevice);
+		QueueIndices find_families(VkPhysicalDevice);
+		//void logical_device();
 	};
 
 }
