@@ -14,6 +14,7 @@ namespace mage {
 		std::string window_title;
 		GLFWwindow *window;
 		VkInstance instance;
+		VkPhysicalDevice card = nullptr;
 	public:
 		Window(int w, int h, std::string title);
 		~Window();
@@ -21,6 +22,8 @@ namespace mage {
 		bool close_window();
 		void init_vulkan_instance();
 		void select_hardware();
+		void logical_device();
+		uint32_t queue_families(VkPhysicalDevice device);
 	};
 
 }

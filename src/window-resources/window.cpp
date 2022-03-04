@@ -13,14 +13,9 @@ Window::Window(int w, int h, std::string title){
 	window_title = title;
 	init_window();
 	init_vulkan_instance();
+	select_hardware(); 
 
-	/*
-	 * I'm currently having issues with identifying the Vulkan-capable graphics card within my
-	 * system, causing this hardware check to fail. I'm currently looking into a fix for this,
-	 * but as it seems to be an ongoing and sporadic problem across multiple GPUs it might be
-	 * a second before this check is uncommented.
-	 */
-	//select_hardware(); 
+	//logical_device();
 }
 
 
@@ -52,7 +47,6 @@ void Window::init_window(){
 
 // Search and select necessary graphics card from system
 	void Window::select_hardware(){
-	VkPhysicalDevice card = nullptr;
 	uint32_t num_devices = 0;
 	vkEnumeratePhysicalDevices(instance, &num_devices, nullptr);
 
@@ -74,6 +68,45 @@ void Window::init_window(){
 
 }
 
+/*
+// Reflects whether user is attempting to currently close window
+void Window::logical_device(){
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+
+        float queuePriority = 1.0f;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        VkDeviceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+        createInfo.pQueueCreateInfos = &queueCreateInfo;
+        createInfo.queueCreateInfoCount = 1;
+
+        createInfo.pEnabledFeatures = &deviceFeatures;
+
+        createInfo.enabledExtensionCount = 0;
+
+        if (enableValidationLayers) {
+            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            createInfo.ppEnabledLayerNames = validationLayers.data();
+        } else {
+            createInfo.enabledLayerCount = 0;
+        }
+
+        if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create logical device!");
+        }
+
+        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+}
+*/
 
 // Reflects whether user is attempting to currently close window
 bool Window::close_window(){
@@ -84,6 +117,7 @@ bool Window::close_window(){
 // Free resources after closed window
 Window::~Window(){
 	vkDestroyInstance(instance, nullptr);
+	//vkDestroyInstance(device, nullptr);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
