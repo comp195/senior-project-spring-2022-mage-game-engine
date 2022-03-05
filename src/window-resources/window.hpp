@@ -10,8 +10,9 @@ namespace mage {
 
 	struct QueueIndices {
 	    std::optional<uint32_t> graphics_family;
+	    std::optional<uint32_t> present_family;
 	    bool complete() {
-	        return graphics_family.has_value();
+	        return graphics_family.has_value() && present_family.has_value();
 	    }
 	};
 
@@ -23,6 +24,10 @@ namespace mage {
 		GLFWwindow *window;
 		VkInstance instance;
 		VkPhysicalDevice card = nullptr;
+		VkDevice device;
+		VkQueue graphics_queue;
+		VkSurfaceKHR surface;
+		VkQueue present_queue;
 	public:
 		Window(int w, int h, std::string title);
 		~Window();
@@ -32,7 +37,8 @@ namespace mage {
 		void select_hardware();
 		bool suitable_device(VkPhysicalDevice);
 		QueueIndices find_families(VkPhysicalDevice);
-		//void logical_device();
+		void logical_device();
+		void create_surface();
 	};
 
 }

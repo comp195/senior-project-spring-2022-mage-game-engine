@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_set>
+#include <set>
 
 using namespace mage;
 
@@ -15,8 +16,9 @@ Window::Window(int w, int h, std::string title){
 	window_title = title;
 	init_window();
 	init_vulkan_instance();
+	create_surface();
 	select_hardware(); 
-	//logical_device();
+	logical_device();
 }
 
 
@@ -101,6 +103,13 @@ QueueIndices Window::find_families(VkPhysicalDevice device) {
             indices.graphics_family = i;
         }
 
+        VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+		if (presentSupport) {
+		    indices.present_family = i;
+		}
+
         if (indices.complete()) {
             break;
         }
@@ -110,45 +119,47 @@ QueueIndices Window::find_families(VkPhysicalDevice device) {
 }
 
 
-/*
-// Reflects whether user is attempting to currently close window
+// Interfaces physical device with queues
 void Window::logical_device(){
-	QueueFamilyIndices indices = findfamilies(physicalDevice);
+	QueueIndices indices = find_families(card);
 
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-        queueCreateInfo.queueCount = 1;
+	// Handled in a loop to account for multiple possible queues
+	std::vector<VkDeviceQueueCreateInfo> create_info_queue{};
+	std::set<uint32_t> unique_queue_families = {indices.graphics_family.value(), indices.present_family.value()};
+    float queue_priority = 1.0f;
+    for(uint32_t queue_family : unique_queue_families){
+    	VkDeviceQueueCreateInfo create_new_info{};
+    	create_new_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    	create_new_info.queueFamilyIndex = queue_family;
+    	create_new_info.queueCount = 1;
+    	create_new_info.pQueuePriorities = &queue_priority;
+    	create_info_queue.push_back(create_new_info);
+    }
 
-        float queuePriority = 1.0f;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+    VkDeviceCreateInfo create_info{};
+    VkPhysicalDeviceFeatures device_features{};
+    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    create_info.queueCreateInfoCount = static_cast<uint32_t>(create_info_queue.size());
+    create_info.pQueueCreateInfos = create_info_queue.data();
+    create_info.pEnabledFeatures = &device_features;
+    create_info.enabledExtensionCount = 0;
 
-        VkPhysicalDeviceFeatures deviceFeatures{};
+    if (vkCreateDevice(card, &create_info, nullptr, &device) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create logical device!");
+    }
 
-        VkDeviceCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-        createInfo.pQueueCreateInfos = &queueCreateInfo;
-        createInfo.queueCreateInfoCount = 1;
-
-        createInfo.pEnabledFeatures = &deviceFeatures;
-
-        createInfo.enabledExtensionCount = 0;
-
-        if (enableValidationLayers) {
-            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-            createInfo.ppEnabledLayerNames = validationLayers.data();
-        } else {
-            createInfo.enabledLayerCount = 0;
-        }
-
-        if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create logical device!");
-        }
-
-        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.graphics_family.value(), 0, &graphics_queue);
 }
-*/
+
+
+// Attempts to create surface to connect Vulkan to window
+// Using GLFW API for maximum cross-platform support
+void Window::create_surface() {
+	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create window surface!");
+    }
+}
+
 
 // Reflects whether user is attempting to currently close window
 bool Window::close_window(){
@@ -160,6 +171,8 @@ bool Window::close_window(){
 Window::~Window(){
 	vkDestroyInstance(instance, nullptr);
 	//vkDestroyInstance(device, nullptr);
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroyInstance(instance, nullptr);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
