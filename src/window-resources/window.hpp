@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <optional>
+#include <vector>
 
 namespace mage {
 
@@ -14,6 +15,12 @@ namespace mage {
 	    bool complete() {
 	        return graphics_family.has_value() && present_family.has_value();
 	    }
+	};
+
+	struct SwapChainSupport {
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> present_modes;
 	};
 
 	class Window {
@@ -39,6 +46,8 @@ namespace mage {
 		QueueIndices find_families(VkPhysicalDevice);
 		void logical_device();
 		void create_surface();
+		bool check_extension_support(VkPhysicalDevice);	
+		SwapChainSupport query_support(VkPhysicalDevice);
 	};
 
 }

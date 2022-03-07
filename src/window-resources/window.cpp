@@ -9,6 +9,8 @@
 using namespace mage;
 
 
+const std::vector<const char*> device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
 // Window constructor
 Window::Window(int w, int h, std::string title){
 	window_width = w;
@@ -71,9 +73,9 @@ void Window::select_hardware(){
 	vkEnumeratePhysicalDevices(instance, &num_devices, devices.data());
 	for (const auto& device : devices) {
 		if (suitable_device(device)) {
-            card = device;
-            break;
-        }
+            		card = device;
+            		break;
+        	}
 	}
 
 	if (card == nullptr) {
@@ -83,9 +85,33 @@ void Window::select_hardware(){
 }
 
 
+// Hub for various tests regarding device capabilities
 bool Window::suitable_device(VkPhysicalDevice device){
 	QueueIndices indices = find_families(device);
-	return indices.complete();
+	bool extensions_supported = check_extension_support(device);
+	bool swap_support = false;
+	if (extensions_supported) {
+		SwapChainSupport support = query_support(device);
+		swap_support = !support.formats.empty() && !support.present_modes.empty();
+	}
+
+	return indices.complete() && extensions_supported && swap_support;
+}
+
+
+// Check if swap chain is supported by selected device
+bool Window::check_extension_support(VkPhysicalDevice device) {
+	uint32_t extension_count;
+   	vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
+
+        std::vector<VkExtensionProperties> extensions_available(extension_count);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, extensions_available.data());
+	std::set<std::string> extensions_required(device_extensions.begin(), device_extensions.end());
+	for (const auto& extension : extensions_available) {
+		extensions_required.erase(extension.extensionName);
+	}
+
+	return extensions_required.empty();
 }
 
 // Find queues supported by selected device
@@ -142,7 +168,8 @@ void Window::logical_device(){
     create_info.queueCreateInfoCount = static_cast<uint32_t>(create_info_queue.size());
     create_info.pQueueCreateInfos = create_info_queue.data();
     create_info.pEnabledFeatures = &device_features;
-    create_info.enabledExtensionCount = 0;
+    create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
+    create_info.ppEnabledExtensionNames = device_extensions.data();
 
     if (vkCreateDevice(card, &create_info, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("failed to create logical device!");
@@ -158,6 +185,29 @@ void Window::create_surface() {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
+}
+
+
+// Populate SwapChainSupport struct
+SwapChainSupport Window::query_support(VkPhysicalDevice device) {
+	SwapChainSupport details;
+
+	uint32_t format_count;
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, nullptr);
+	if (format_count != 0) {
+		details.formats.resize(format_count);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, details.formats.data());
+	}
+
+	uint32_t present_count;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_count, nullptr);
+	if (present_count != 0) {
+		details.present_modes.resize(present_count);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_count, details.present_modes.data());
+	}
+
+	return details;
 }
 
 
