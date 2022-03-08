@@ -1,4 +1,4 @@
-#include "test-window.hpp"
+#include "test-game.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -6,7 +6,7 @@
 
 int main() {
 
-	mage::TestWindow program{};
+	mage::TestGame program{};
 	program.run();
 
 }
