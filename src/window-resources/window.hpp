@@ -28,13 +28,18 @@ namespace mage {
 		int window_width;
 		int window_height;
 		std::string window_title;
-		GLFWwindow *window;
+		GLFWwindow* window;
 		VkInstance instance;
 		VkPhysicalDevice card = nullptr;
 		VkDevice device;
 		VkQueue graphics_queue;
 		VkSurfaceKHR surface;
 		VkQueue present_queue;
+		VkSwapchainKHR swap_chain;
+		std::vector<VkImage> swap_images;
+		VkFormat swap_image_format;
+		VkExtent2D swap_extent;
+		std::vector<VkImageView> swap_image_views;
 	public:
 		Window(int w, int h, std::string title);
 		~Window();
@@ -48,6 +53,11 @@ namespace mage {
 		void create_surface();
 		bool check_extension_support(VkPhysicalDevice);	
 		SwapChainSupport query_support(VkPhysicalDevice);
+		void create_swap_chain();
+		VkSurfaceFormatKHR choose_swap_format(const std::vector<VkSurfaceFormatKHR>&);
+		VkPresentModeKHR choose_swap_mode(const std::vector<VkPresentModeKHR>&);
+		VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR&);
+		void create_image_views();
 	};
 
 }
