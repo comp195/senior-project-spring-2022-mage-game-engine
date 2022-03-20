@@ -7,8 +7,28 @@
 
 using namespace mage;
 
+GraphicsPipeline::GraphicsPipeline(VkDevice device_pass){
+	device = device_pass;
+}
+
 // Put together graphics pipeline
 void GraphicsPipeline::create_pipeline(){
+	auto vertex_bytecode = read_file("../shaders/bytecode/vert.spv");
+	auto fragment_bytecode = read_file("../shaders/bytecode/frag.spv");
+	vertex_module = create_module(vertex_bytecode);
+	fragment_module = create_module(fragment_bytecode);
+
+	VkPipelineShaderStageCreateInfo vertex_info{};
+	vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertex_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertex_info.module = vertex_module;
+	vertex_info.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragment_info{};
+	fragment_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragment_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fragment_info.module = fragment_module;
+	fragment_info.pName = "main";
 
 }
 
@@ -41,7 +61,7 @@ VkShaderModule GraphicsPipeline::create_module(const std::vector<char>& data){
 	create_info.pCode = reinterpret_cast<const uint32_t*>(data.data());
 
 	VkShaderModule shader_module;
-	if (vkCreateShaderModule(DEVICE, &create_info, nullptr, &shader_module) != VK_SUCCESS) {
+	if (vkCreateShaderModule(device, &create_info, nullptr, &shader_module) != VK_SUCCESS) {
 		std::cerr << "Failed to create shader module";
 		exit(EXIT_FAILURE);
 	}
@@ -51,5 +71,6 @@ VkShaderModule GraphicsPipeline::create_module(const std::vector<char>& data){
 }
 
 GraphicsPipeline::~GraphicsPipeline(){
-
+	vkDestroyShaderModule(device, fragment_module, nullptr);
+	vkDestroyShaderModule(device, vertex_module, nullptr);
 }

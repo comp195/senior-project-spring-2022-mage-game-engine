@@ -58,6 +58,7 @@ namespace mage {
 		VkPresentModeKHR choose_swap_mode(const std::vector<VkPresentModeKHR>&);
 		VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR&);
 		void create_image_views();
+		VkDevice get_device();
 	};
 
 }

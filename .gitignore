@@ -4,5 +4,8 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 
+# Shader bytecode
+src/shaders/bytecode/
+
 # Executable binary
 mage-game-engine

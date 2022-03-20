@@ -1,6 +1,7 @@
 #pragma once
 
 #include "window-resources/window.hpp"
+#include "pipeline-resources/pipeline.hpp"
 
 namespace mage {
 
@@ -9,8 +10,9 @@ namespace mage {
 		static const int WIDTH = 800;
 		static const int HEIGHT = 600;
 		std::string TITLE = "Mage Testing Window";
-		Window test_game{WIDTH, HEIGHT, TITLE};
 	public:
+		Window test_game{WIDTH, HEIGHT, TITLE};
+		GraphicsPipeline pipeline{test_game.get_device()};
 		TestGame();
 		~TestGame();
 		void run();

@@ -335,6 +335,10 @@ void Window::create_image_views() {
 	}
 }
 
+VkDevice Window::get_device(){
+	return device;
+}
+
 
 // Reflects whether user is attempting to currently close window
 bool Window::close_window(){

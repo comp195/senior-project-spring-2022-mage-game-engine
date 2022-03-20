@@ -4,9 +4,13 @@ _MAGE_ (MAGE Amazing Game Engine) is the final senior project of Jordan Scharkey
 
 ## Dependencies and Compiling
 
-#### Vulkan and GLFW
+#### Vulkan, GLFW, and glslc
 
-Vulkan drivers for whichever operating system you are using will be required. You can find out more regarding this [here.](https://www.vulkan.org/tools#vulkan-gpu-resources) You will also need GLFW, a library that helps with window creation. You can read about that, along with additional dependency setup, [here.](https://vulkan-tutorial.com/Development_environment)
+Vulkan drivers for whichever operating system you are using will be required. You can find out more regarding this [here.](https://www.vulkan.org/tools#vulkan-gpu-resources) You will also need GLFW, a library that helps with window creation. You can read about that, along with additional dependency setup, [here.](https://vulkan-tutorial.com/Development_environment) We will be using the shader compiler glslc, which will also be required as a dependency.
+
+#### Compiling Shaders
+
+Use the script for your respective operating system to compile shaders before running code. Note: the .bat file for Windows users currently requires manual input of glslc.exe location on personal system, but I will look into fixing this in the future.
 
 #### Using CMake to Build
 
