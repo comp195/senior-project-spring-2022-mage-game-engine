@@ -8,13 +8,16 @@
 using namespace mage;
 
 GraphicsPipeline::GraphicsPipeline(VkDevice device_pass){
+	// This is used to access the physical device that will be performing Vulkan-related processes
 	device = device_pass;
+
+	create_pipeline();
 }
 
 // Put together graphics pipeline
 void GraphicsPipeline::create_pipeline(){
-	auto vertex_bytecode = read_file("../shaders/bytecode/vert.spv");
-	auto fragment_bytecode = read_file("../shaders/bytecode/frag.spv");
+	auto vertex_bytecode = read_file("src/shaders/bytecode/vert.spv");
+	auto fragment_bytecode = read_file("src/shaders/bytecode/frag.spv");
 	vertex_module = create_module(vertex_bytecode);
 	fragment_module = create_module(fragment_bytecode);
 
@@ -29,6 +32,8 @@ void GraphicsPipeline::create_pipeline(){
 	fragment_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	fragment_info.module = fragment_module;
 	fragment_info.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shader_info[] = {vertex_info, fragment_info};
 
 }
 
