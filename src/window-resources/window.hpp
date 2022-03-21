@@ -62,6 +62,7 @@ namespace mage {
 		VkDevice get_device();
 		VkExtent2D get_swap();
 		void enable_nonFill();
+		VkFormat get_format();
 	};
 
 }

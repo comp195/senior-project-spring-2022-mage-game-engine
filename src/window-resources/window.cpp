@@ -346,6 +346,10 @@ void Window::enable_nonFill(){
 	device_features.fillModeNonSolid = true;
 }
 
+VkFormat Window::get_format(){
+	return swap_image_format;
+}
+
 
 // Reflects whether user is attempting to currently close window
 bool Window::close_window(){

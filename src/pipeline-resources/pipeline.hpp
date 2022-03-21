@@ -14,6 +14,8 @@ namespace mage {
 			VkViewport viewport;
 			VkRect2D scissor{};
 			VkPipelineRasterizationStateCreateInfo rasterizer{};
+			VkRenderPass render_pass;
+			VkPipelineLayout pipeline_layout;
 		public:
 			GraphicsPipeline(Window& window_pass);
 			~GraphicsPipeline();	
@@ -23,6 +25,8 @@ namespace mage {
 			void create_viewport(VkExtent2D swap_extent);
 			void config_rasterizer();
 			void change_rasterizer_mode(Window window_pass, VkPolygonMode poly);
+			void config_blending();
+			void config_render_pass(VkFormat format);
 	};
 
 }

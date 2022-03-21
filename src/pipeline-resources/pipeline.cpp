@@ -14,6 +14,10 @@ GraphicsPipeline::GraphicsPipeline(Window& window_pass){
 
 	create_viewport(window_pass.get_swap());
 	create_pipeline();
+
+	// Additional framebuffer details through render pass
+	config_render_pass(window_pass.get_format());
+
 }
 
 // Put together graphics pipeline
@@ -56,6 +60,31 @@ void GraphicsPipeline::create_pipeline(){
 	viewport_info.pViewports = &viewport;
 	viewport_info.scissorCount = 1;
 	viewport_info.pScissors = &scissor;
+
+	// Rasterizing options are unique, so I put them in its own function
+	config_rasterizer();
+
+	// Multisampling info
+	VkPipelineMultisampleStateCreateInfo multisample_info{};
+	multisample_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisample_info.sampleShadingEnable = VK_FALSE;
+
+	// Framebuffer will be expanded upon later, so I put it in its own function
+	config_blending();
+
+	// Some final pipeline struct declarations
+	VkPipelineLayoutCreateInfo pipeline_info{};
+	pipeline_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_info.setLayoutCount = 0;
+	pipeline_info.pSetLayouts = nullptr;
+	pipeline_info.pushConstantRangeCount = 0;
+	pipeline_info.pPushConstantRanges = nullptr;
+
+	// Now we can attempt to bring the pipeline layout together
+	if (vkCreatePipelineLayout(device, &pipeline_info, nullptr, &pipeline_layout) != VK_SUCCESS){
+		std::cerr << "Failed to create pipeline layout";
+		exit(EXIT_FAILURE);
+	}
 
 }
 
@@ -137,8 +166,64 @@ void GraphicsPipeline::change_rasterizer_mode(Window window_pass, VkPolygonMode 
 
 }
 
+// Color blending and initial framebuffer settings
+void GraphicsPipeline::config_blending(){
+	VkPipelineColorBlendAttachmentState blending_info{};
+	blending_info.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	blending_info.blendEnable = VK_FALSE;
+	blending_info.blendEnable = VK_TRUE;
+	blending_info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	blending_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	blending_info.colorBlendOp = VK_BLEND_OP_ADD;
+	blending_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blending_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blending_info.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	VkPipelineColorBlendStateCreateInfo color_info{};
+	color_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	color_info.logicOpEnable = VK_TRUE;
+	color_info.attachmentCount = 1;
+	color_info.pAttachments = &blending_info;
+}
+
+// Attachments for better describing the framebuffer
+void GraphicsPipeline::config_render_pass(VkFormat format){
+	VkAttachmentDescription color_attachment{};
+	color_attachment.format = format;
+	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference attachment_reference{};
+	attachment_reference.attachment = 0;
+	attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass{};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &attachment_reference;
+
+	VkRenderPassCreateInfo render_info{};
+	render_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_info.attachmentCount = 1;
+	render_info.pAttachments = &color_attachment;
+	render_info.subpassCount = 1;
+	render_info.pSubpasses = &subpass;
+
+	if (vkCreateRenderPass(device, &render_info, nullptr, &render_pass) != VK_SUCCESS){
+		std::cerr << "Failed to create render pass";
+		exit(EXIT_FAILURE);
+	}
+
+}
+
 
 GraphicsPipeline::~GraphicsPipeline(){
 	vkDestroyShaderModule(device, fragment_module, nullptr);
 	vkDestroyShaderModule(device, vertex_module, nullptr);
+	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 }
