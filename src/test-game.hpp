@@ -11,10 +11,10 @@ namespace mage {
 		static const int HEIGHT = 600;
 		std::string TITLE = "Mage Testing Window";
 	public:
-		Window test_game{WIDTH, HEIGHT, TITLE};
-		GraphicsPipeline pipeline{test_game.get_device()};
 		TestGame();
 		~TestGame();
+		Window test_game{WIDTH, HEIGHT, TITLE};
+		GraphicsPipeline pipeline{test_game};
 		void run();
 	};
 

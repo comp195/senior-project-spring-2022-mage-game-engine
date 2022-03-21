@@ -36,6 +36,7 @@ namespace mage {
 		VkSurfaceKHR surface;
 		VkQueue present_queue;
 		VkSwapchainKHR swap_chain;
+		VkPhysicalDeviceFeatures device_features{};
 		std::vector<VkImage> swap_images;
 		VkFormat swap_image_format;
 		VkExtent2D swap_extent;
@@ -59,6 +60,8 @@ namespace mage {
 		VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR&);
 		void create_image_views();
 		VkDevice get_device();
+		VkExtent2D get_swap();
+		void enable_nonFill();
 	};
 
 }

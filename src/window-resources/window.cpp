@@ -167,7 +167,6 @@ void Window::logical_device(){
     }
 
     VkDeviceCreateInfo create_info{};
-    VkPhysicalDeviceFeatures device_features{};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     create_info.queueCreateInfoCount = static_cast<uint32_t>(create_info_queue.size());
     create_info.pQueueCreateInfos = create_info_queue.data();
@@ -337,6 +336,14 @@ void Window::create_image_views() {
 
 VkDevice Window::get_device(){
 	return device;
+}
+
+VkExtent2D Window::get_swap(){
+	return swap_extent;
+}
+
+void Window::enable_nonFill(){
+	device_features.fillModeNonSolid = true;
 }
 
 
