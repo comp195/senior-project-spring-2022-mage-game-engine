@@ -2,6 +2,7 @@
 
 #include "window-resources/window.hpp"
 #include "pipeline-resources/pipeline.hpp"
+#include "pipeline-resources/device.hpp"
 
 namespace mage {
 
@@ -14,7 +15,8 @@ namespace mage {
 		TestGame();
 		~TestGame();
 		Window test_game{WIDTH, HEIGHT, TITLE};
-		GraphicsPipeline pipeline{test_game};
+		DeviceHandling test_device{test_game};
+		//GraphicsPipeline test_pipeline{test_device};
 		void run();
 	};
 

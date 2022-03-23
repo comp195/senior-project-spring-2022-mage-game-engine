@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../window-resources/window.hpp"
+#include "device.hpp"
 #include <string>
 #include <vector>
 
@@ -16,10 +16,12 @@ namespace mage {
 			VkPipelineRasterizationStateCreateInfo rasterizer{};
 			VkRenderPass render_pass;
 			VkPipelineLayout pipeline_layout;
+			VkPipelineColorBlendStateCreateInfo color_info{};
+			VkPipeline graphics_pipeline;
 		public:
-			GraphicsPipeline(Window& window_pass);
+			GraphicsPipeline(DeviceHandling device_pass);
 			~GraphicsPipeline();	
-			void create_pipeline();
+			void create_pipeline(VkFormat format);
 			static std::vector<char> read_file(const std::string& file_name);
 			VkShaderModule create_module(const std::vector<char>& data);
 			void create_viewport(VkExtent2D swap_extent);

@@ -8,20 +8,13 @@
 using namespace mage;
 
 // Constructor
-GraphicsPipeline::GraphicsPipeline(Window& window_pass){
-	// This is used to access the physical device that will be performing Vulkan-related processes
-	device = window_pass.get_device();
-
-	create_viewport(window_pass.get_swap());
-	create_pipeline();
-
-	// Additional framebuffer details through render pass
-	config_render_pass(window_pass.get_format());
-
+GraphicsPipeline::GraphicsPipeline(DeviceHandling device_pass){	
+	//create_viewport(device_pass.get_swap_extent());
+	//create_pipeline(device_pass.get_swap_format());
 }
 
 // Put together graphics pipeline
-void GraphicsPipeline::create_pipeline(){
+void GraphicsPipeline::create_pipeline(VkFormat format){
 	// Read bytecode from shaders and create Vulkan modules for them
 	auto vertex_bytecode = read_file("src/shaders/bytecode/vert.spv");
 	auto fragment_bytecode = read_file("src/shaders/bytecode/frag.spv");
@@ -72,7 +65,9 @@ void GraphicsPipeline::create_pipeline(){
 	// Framebuffer will be expanded upon later, so I put it in its own function
 	config_blending();
 
-	// Some final pipeline struct declarations
+	config_render_pass(format);
+
+	//// Some final pipeline struct declarations
 	VkPipelineLayoutCreateInfo pipeline_info{};
 	pipeline_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_info.setLayoutCount = 0;
@@ -86,6 +81,31 @@ void GraphicsPipeline::create_pipeline(){
 		exit(EXIT_FAILURE);
 	}
 
+	// Now to put it all together...
+	VkGraphicsPipelineCreateInfo pipe_info{};
+	pipe_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipe_info.stageCount = 2;
+	pipe_info.pStages = shader_info;
+	pipe_info.pVertexInputState = &vertex_input_info;
+	pipe_info.pInputAssemblyState = &assembly_info;
+	pipe_info.pViewportState = &viewport_info;
+	pipe_info.pRasterizationState = &rasterizer;
+	pipe_info.pMultisampleState = &multisample_info;
+	pipe_info.pColorBlendState = &color_info;
+	pipe_info.layout = pipeline_layout;
+	pipe_info.renderPass = render_pass;
+	pipe_info.subpass = 0;
+	pipe_info.basePipelineHandle = VK_NULL_HANDLE;
+	pipe_info.basePipelineIndex = -1;
+	std::cout << "here3";
+
+	// Moment of truth
+	 if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipe_info, nullptr, &graphics_pipeline) != VK_SUCCESS){
+	 	std::cerr << "Failed to create graphics pipeline";
+	 	exit(EXIT_FAILURE);
+	 }
+
+	std::cout << "here4";
 }
 
 // Used to read data from shader files before creating their shader modules
@@ -144,27 +164,13 @@ void GraphicsPipeline::config_rasterizer(){
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // this can be changed with mage::change_rasterizer_mode(VkStructureType)
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 }
 
-// Used to change rasterizer polygon mode (if you'd like)
-void GraphicsPipeline::change_rasterizer_mode(Window window_pass, VkPolygonMode poly){
-	// poly can be any of the following types:
-	// VK_POLYGON_MODE_FILL (default)
-	// VK_POLYGON_MODE_LINE
-	// VK_POLYGON_MODE_POINT
-	
-	if (poly != VK_POLYGON_MODE_FILL){
-		window_pass.enable_nonFill();
-	}
-
-	rasterizer.polygonMode = poly;
-
-}
 
 // Color blending and initial framebuffer settings
 void GraphicsPipeline::config_blending(){
@@ -179,7 +185,6 @@ void GraphicsPipeline::config_blending(){
 	blending_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blending_info.alphaBlendOp = VK_BLEND_OP_ADD;
 
-	VkPipelineColorBlendStateCreateInfo color_info{};
 	color_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	color_info.logicOpEnable = VK_TRUE;
 	color_info.attachmentCount = 1;
@@ -223,7 +228,10 @@ void GraphicsPipeline::config_render_pass(VkFormat format){
 
 
 GraphicsPipeline::~GraphicsPipeline(){
+	vkDestroyPipeline(device, graphics_pipeline, nullptr);
+	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 	vkDestroyShaderModule(device, fragment_module, nullptr);
 	vkDestroyShaderModule(device, vertex_module, nullptr);
 	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+	vkDestroyRenderPass(device, render_pass, nullptr);
 }
