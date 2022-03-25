@@ -16,7 +16,7 @@ namespace mage {
 		~TestGame();
 		Window test_game{WIDTH, HEIGHT, TITLE};
 		DeviceHandling test_device{test_game};
-		//GraphicsPipeline test_pipeline{test_device};
+		GraphicsPipeline test_pipeline{test_device};
 		void run();
 	};
 

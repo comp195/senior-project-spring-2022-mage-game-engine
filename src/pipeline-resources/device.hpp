@@ -65,6 +65,8 @@ namespace mage {
 		VkFormat get_swap_format(){
 			return swap_image_format;
 		}
+		void check_glfw_extensions();
+		std::vector<const char*> get_required_extensions();
 
 	};
 

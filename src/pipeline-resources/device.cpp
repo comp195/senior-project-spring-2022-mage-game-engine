@@ -43,6 +43,9 @@ void DeviceHandling::init_vulkan_instance(){
 	    std::cerr << "failed to create instance";
 	    exit(EXIT_FAILURE);
 	}
+
+	check_glfw_extensions();
+
 }
 
 
@@ -70,6 +73,46 @@ void DeviceHandling::select_hardware(){
 	    std::cerr << "Error finding capable hardware.\n";
 		exit(EXIT_FAILURE);
 	}
+}
+
+
+void DeviceHandling::check_glfw_extensions(){
+	uint32_t num_extensions = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &num_extensions, nullptr);
+	std::vector<VkExtensionProperties> extensions(num_extensions);
+	vkEnumerateInstanceExtensionProperties(nullptr, &num_extensions, extensions.data());
+	std::cout << "Available Extensions:" << std::endl;
+	std::unordered_set<std::string> list;
+	for (const auto &extension : extensions){
+		std::cout << " - " << extension.extensionName << std::endl;
+		list.insert(extension.extensionName);
+	}
+
+	bool quit = false;
+	std::cout << "Required Extensions" << std::endl;
+	auto required_extensions = get_required_extensions();
+	for (const auto &required_extension : required_extensions){
+		std::cout << " - " << required_extension << std::endl;
+		if (list.find(required_extension) == list.end()) {
+			std::cerr << "Missing required glfw extension: " << required_extension << std::endl;
+			quit = true;
+		}
+	}
+
+	if (quit){
+		exit(EXIT_FAILURE);
+	}
+
+
+}
+
+
+std::vector<const char*> DeviceHandling::get_required_extensions(){
+	uint32_t num_extensions = 0;
+	const char **glfw_extensions;
+	glfw_extensions = glfwGetRequiredInstanceExtensions(&num_extensions);
+	std::vector<const char *> extensions(glfw_extensions, glfw_extensions + num_extensions);
+	return extensions;
 }
 
 
