@@ -18,6 +18,7 @@ DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
 	select_hardware();
 	logical_device();
 	//create_swap_chain();
+	create_command_pool();
 }
 
 // Initialize Vulkan library
@@ -60,9 +61,13 @@ void DeviceHandling::select_hardware(){
 	}
 
 	//This area can be fleshed out in the future to select optimal GPU when multiple are present
+	VkPhysicalDeviceProperties properties;
 	std::vector<VkPhysicalDevice> devices(num_devices);
 	vkEnumeratePhysicalDevices(instance, &num_devices, devices.data());
+	std::cout << "Found " << num_devices << " device(s)" << std::endl;
 	for (const auto& device : devices) {
+		vkGetPhysicalDeviceProperties(device, &properties);
+		std::cout << "Currently checking " << properties.deviceName << "..." << std::endl;
 		if (suitable_device(device)) {
             		card = device;
             		break;
@@ -72,7 +77,11 @@ void DeviceHandling::select_hardware(){
 	if (card == nullptr) {
 	    std::cerr << "Error finding capable hardware.\n";
 		exit(EXIT_FAILURE);
-	}
+	} 
+
+	vkGetPhysicalDeviceProperties(card, &properties);
+	std::cout << "Selected device: " << properties.deviceName << std::endl;
+
 }
 
 
@@ -120,17 +129,15 @@ std::vector<const char*> DeviceHandling::get_required_extensions(){
 bool DeviceHandling::suitable_device(VkPhysicalDevice device){
 	QueueIndices indices = find_families(device);
 	bool extensions_supported = check_extension_support(device);
-
-/*	SEE QUERY_SUPPORT FOR ADDITIONAL NOTES
+	std::cout << "Device has all required extensions" << std::endl;
 
 	bool swap_support = false;
 	if (extensions_supported) {
 		SwapChainSupport support = query_support(device);
 		swap_support = !support.formats.empty() && !support.present_modes.empty();
 	}
-*/
 
-	return indices.complete() && extensions_supported;
+	return indices.complete() && swap_support && extensions_supported;
 }
 
 
@@ -164,21 +171,15 @@ QueueIndices DeviceHandling::find_families(VkPhysicalDevice device) {
     	if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphics_family = i;
             indices.graphics_family_has_value = true;
-            indices.present_family = i;
-		    indices.present_family_has_value = true;
         }
 
-/*		THERE SEEMS TO BE A SEGFAULT ASSOCIATED WITH KHR-RELATED FUNCTIONS
-		TODO: LOOK INTO THIS
-
         VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+	vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
-		if (queue_family.queueCount > 0 && presentSupport) {
-		    indices.present_family = i;
-		    indices.present_family_has_value = true;
-		}
-*/
+	if (queue_family.queueCount > 0 && presentSupport) {
+		indices.present_family = i;
+		indices.present_family_has_value = true;
+	}
 
         if (indices.complete()) {
             break;
@@ -196,7 +197,7 @@ void DeviceHandling::logical_device(){
 
 	// Handled in a loop to account for multiple possible queues
 	std::vector<VkDeviceQueueCreateInfo> create_info_queue{};
-	std::set<uint32_t> unique_queue_families = {indices.graphics_family.value(), indices.present_family.value()};
+	std::set<uint32_t> unique_queue_families = {indices.graphics_family, indices.present_family.value()};
     float queue_priority = 1.0f;
     for(uint32_t queue_family : unique_queue_families){
     	VkDeviceQueueCreateInfo create_new_info{};
@@ -219,22 +220,20 @@ void DeviceHandling::logical_device(){
         throw std::runtime_error("failed to create logical device!");
     }
 
-    vkGetDeviceQueue(device, indices.graphics_family.value(), 0, &graphics_queue);
+    vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
 }
 
 
 // Attempts to create surface to connect Vulkan to window
 // Using GLFW API for maximum cross-platform support
 void DeviceHandling::create_surface() {
-	window.create_surface(instance, surface);
+	window.create_surface(instance, &surface);
 }
 
 
 // Populate SwapChainSupport struct
 SwapChainSupport DeviceHandling::query_support(VkPhysicalDevice device) {
 	SwapChainSupport details;
-
-/*	SEE QUERY_RESULTS FOR ADDITIONAL NOTES
 
 	uint32_t format_count;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
@@ -246,11 +245,10 @@ SwapChainSupport DeviceHandling::query_support(VkPhysicalDevice device) {
 
 	uint32_t present_count;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_count, nullptr);
-	f (present_count != 0) {
+	if (present_count != 0) {
 		details.present_modes.resize(present_count);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_count, details.present_modes.data());
 	}
-*/
 
 	return details;
 }
@@ -317,7 +315,7 @@ void DeviceHandling::create_swap_chain() {
 	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	QueueIndices indices = find_families(card);
-	uint32_t queue_indices[] = {indices.graphics_family.value(), indices.present_family.value()};
+	uint32_t queue_indices[] = {indices.graphics_family, indices.present_family.value()};
 	if (indices.graphics_family != indices.present_family) {
 		create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		create_info.queueFamilyIndexCount = 2;
@@ -373,6 +371,21 @@ void DeviceHandling::create_image_views() {
 	    		exit(EXIT_FAILURE);		
 		}
 	}
+}
+
+void DeviceHandling::create_command_pool(){
+	QueueIndices indices = find_families(card);
+
+	VkCommandPoolCreateInfo pool_info{};
+	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	pool_info.queueFamilyIndex = indices.graphics_family;
+	pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+	if (vkCreateCommandPool(device, &pool_info, nullptr, &command_pool) != VK_SUCCESS){
+		std::cerr << "failed to create command pool" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 }
 
 // Free resources after closed window

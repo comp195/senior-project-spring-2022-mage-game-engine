@@ -8,16 +8,16 @@
 using namespace mage;
 
 // Constructor
-GraphicsPipeline::GraphicsPipeline(DeviceHandling device_pass){	
-	//create_viewport(device_pass.get_swap_extent());
+GraphicsPipeline::GraphicsPipeline(DeviceHandling& device_pass){	
+	create_viewport(device_pass.get_swap_extent());
 	//create_pipeline(device_pass.get_swap_format());
 }
 
 // Put together graphics pipeline
 void GraphicsPipeline::create_pipeline(VkFormat format){
 	// Read bytecode from shaders and create Vulkan modules for them
-	auto vertex_bytecode = read_file("src/shaders/bytecode/vert.spv");
-	auto fragment_bytecode = read_file("src/shaders/bytecode/frag.spv");
+	auto vertex_bytecode = read_file("src/shaders/vert.spv");
+	auto fragment_bytecode = read_file("src/shaders/frag.spv");
 	vertex_module = create_module(vertex_bytecode);
 	fragment_module = create_module(fragment_bytecode);
 

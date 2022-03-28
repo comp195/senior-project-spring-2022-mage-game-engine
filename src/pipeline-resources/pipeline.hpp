@@ -19,7 +19,7 @@ namespace mage {
 			VkPipelineColorBlendStateCreateInfo color_info{};
 			VkPipeline graphics_pipeline;
 		public:
-			GraphicsPipeline(DeviceHandling device_pass);
+			GraphicsPipeline(DeviceHandling& device_pass);
 			~GraphicsPipeline();	
 			void create_pipeline(VkFormat format);
 			static std::vector<char> read_file(const std::string& file_name);

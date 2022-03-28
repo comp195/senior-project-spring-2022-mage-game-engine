@@ -11,7 +11,7 @@
 namespace mage {
 
 	struct QueueIndices {
-	    std::optional<uint32_t> graphics_family;
+	    uint32_t graphics_family;
 	    std::optional<uint32_t> present_family;
 	    std::optional<bool> graphics_family_has_value = false;
 	    std::optional<bool> present_family_has_value = false;
@@ -41,6 +41,7 @@ namespace mage {
 		VkFormat swap_image_format;
 		VkExtent2D swap_extent;
 		std::vector<VkImageView> swap_image_views;
+		VkCommandPool command_pool;
 	public:
 		DeviceHandling(Window &window_pass);
 		~DeviceHandling();
@@ -67,6 +68,7 @@ namespace mage {
 		}
 		void check_glfw_extensions();
 		std::vector<const char*> get_required_extensions();
+		void create_command_pool();
 
 	};
 

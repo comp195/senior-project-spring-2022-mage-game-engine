@@ -5,7 +5,7 @@ cmake_install.cmake
 Makefile
 
 # Shader bytecode
-src/shaders/bytecode/
+src/shaders/*.spv
 
 # Executable binary
 mage-game-engine

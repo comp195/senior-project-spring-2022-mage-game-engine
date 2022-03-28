@@ -20,7 +20,7 @@ namespace mage {
 		~Window();
 		void init_window();
 		bool close_window();
-		void create_surface(VkInstance instance, VkSurfaceKHR surface);
+		void create_surface(VkInstance instance, VkSurfaceKHR *surface);
 	};
 
 }

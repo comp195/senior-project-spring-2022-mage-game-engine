@@ -31,8 +31,8 @@ void Window::init_window(){
 }
 
 // Attempts to create surface to connect Vulkan to window
-void Window::create_surface(VkInstance instance, VkSurfaceKHR surface) {
-	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+void Window::create_surface(VkInstance instance, VkSurfaceKHR *surface) {
+	if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
         exit(EXIT_FAILURE);
     }
