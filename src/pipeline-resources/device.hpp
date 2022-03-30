@@ -69,6 +69,7 @@ namespace mage {
 		void check_glfw_extensions();
 		std::vector<const char*> get_required_extensions();
 		void create_command_pool();
+		VkDevice get_device();
 
 	};
 

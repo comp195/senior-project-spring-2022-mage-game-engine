@@ -17,7 +17,7 @@ DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
 	create_surface();
 	select_hardware();
 	logical_device();
-	//create_swap_chain();
+	create_swap_chain();
 	create_command_pool();
 }
 
@@ -332,16 +332,16 @@ void DeviceHandling::create_swap_chain() {
 	create_info.clipped = VK_TRUE;
 	create_info.oldSwapchain = VK_NULL_HANDLE;
 
-	//if (vkCreateSwapchainKHR(device, &create_info, nullptr, &swap_chain) != VK_SUCCESS) {
-	//	std::cerr << "failed to create swap chain";
-	//    	exit(EXIT_FAILURE);		
-	//}
+	if (vkCreateSwapchainKHR(device, &create_info, nullptr, &swap_chain) != VK_SUCCESS) {
+		std::cerr << "failed to create swap chain";
+	    	exit(EXIT_FAILURE);		
+	}
 
-	//vkGetSwapchainImagesKHR(device, swap_chain, &image_count, nullptr);
-	//swap_images.resize(image_count);
-	//vkGetSwapchainImagesKHR(device, swap_chain, &image_count, swap_images.data());
-	//swap_image_format = surface_format.format;
-	//swap_extent = swap_extent;
+	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, nullptr);
+	swap_images.resize(image_count);
+	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, swap_images.data());
+	swap_image_format = surface_format.format;
+	swap_extent = swap_extent;
 
 }
 
@@ -386,6 +386,10 @@ void DeviceHandling::create_command_pool(){
 		exit(EXIT_FAILURE);
 	}
 
+}
+
+VkDevice DeviceHandling::get_device(){
+	return device;
 }
 
 // Free resources after closed window
