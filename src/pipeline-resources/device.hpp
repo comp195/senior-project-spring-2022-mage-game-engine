@@ -42,6 +42,7 @@ namespace mage {
 		VkExtent2D swap_extent;
 		std::vector<VkImageView> swap_image_views;
 		VkCommandPool command_pool;
+		VkCommandBuffer command_buffer;
 	public:
 		DeviceHandling(Window &window_pass);
 		~DeviceHandling();
@@ -66,9 +67,12 @@ namespace mage {
 		VkFormat get_swap_format(){
 			return swap_image_format;
 		}
+		std::vector<VkImageView> get_swap_view();
 		void check_glfw_extensions();
 		std::vector<const char*> get_required_extensions();
 		void create_command_pool();
+		void create_command_buffer();
+		void record_command_buffer(VkCommandBuffer command_buffer, uint32_t image_index, VkRenderPass render_pass);
 		VkDevice get_device();
 
 	};

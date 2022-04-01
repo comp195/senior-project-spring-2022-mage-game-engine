@@ -17,13 +17,16 @@ GraphicsPipeline::GraphicsPipeline(DeviceHandling& device_pass){
 	
 	std::cout << std::endl << "Beginning pipeline construction..." << std::endl;
 	create_pipeline(device_pass);
+
+	std::cout << std::endl << "Creating framebuffer..." << std::endl;
+	create_framebuffer(device_pass);
 }
 
 // Put together graphics pipeline
 void GraphicsPipeline::create_pipeline(DeviceHandling& device_pass){
 
 	std::cout << "Filling default pipeline information... " << std::endl;
-	PipelineInfo config_info = default_pipeline_info(config_info, device_pass);
+	PipelineInfo config_info = default_pipeline_info(device_pass);
 	std::cout << "Pipeline information complete" << std::endl;
 
 	std::cout << "Reading shader bytecode..." << std::endl;
@@ -114,8 +117,8 @@ void GraphicsPipeline::create_pipeline(DeviceHandling& device_pass){
 	pipe_info.layout = pipeline_layout;
 	pipe_info.renderPass = render_pass;
 	pipe_info.subpass = 0;
-	pipe_info.basePipelineHandle = VK_NULL_HANDLE;
-	pipe_info.basePipelineIndex = -1;
+	//pipe_info.basePipelineHandle = VK_NULL_HANDLE;
+	//pipe_info.basePipelineIndex = -1;
 
 	// Moment of truth
 	std::cout << "Final creation of pipeline..." << std::endl;
@@ -168,7 +171,9 @@ VkShaderModule GraphicsPipeline::create_module(const std::vector<char>& data){
 
 
 
-PipelineInfo GraphicsPipeline::default_pipeline_info(PipelineInfo& config_info, DeviceHandling& device_pass){
+PipelineInfo GraphicsPipeline::default_pipeline_info(DeviceHandling& device_pass){
+	PipelineInfo config_info;
+
 	std::cout << " - input_assembly_info..." << std::endl;
 	config_info.input_assembly_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	config_info.input_assembly_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -236,6 +241,30 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(PipelineInfo& config_info, 
 
 }
 
+void GraphicsPipeline::create_framebuffer(DeviceHandling& device_pass){
+	std::vector<VkImageView> swap_view = device_pass.get_swap_view();
+	swap_chain_framebuffers.resize(swap_view.size());
+
+	for (size_t i = 0; i < swap_view.size(); i++){
+		VkImageView attachments[] = { swap_view[i] };
+		
+		VkFramebufferCreateInfo framebuffer_info{};
+		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_info.renderPass = render_pass;
+		framebuffer_info.attachmentCount = 1;
+		framebuffer_info.pAttachments = attachments;
+		framebuffer_info.width = device_pass.get_swap_extent().width;
+		framebuffer_info.height = device_pass.get_swap_extent().height;
+		framebuffer_info.layers = 1;
+
+		if (vkCreateFramebuffer(device_pass.get_device(), &framebuffer_info, nullptr, &swap_chain_framebuffers[i]) != VK_SUCCESS) {
+			std::cerr << "Failed to create framebuffer" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+}
+
 GraphicsPipeline::~GraphicsPipeline(){
 	vkDestroyPipeline(device, graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
@@ -243,4 +272,7 @@ GraphicsPipeline::~GraphicsPipeline(){
 	vkDestroyShaderModule(device, vertex_module, nullptr);
 	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
 	vkDestroyRenderPass(device, render_pass, nullptr);
+	for (auto framebuffer : swap_chain_framebuffers) { 
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
 }

@@ -39,6 +39,7 @@ namespace mage {
 			VkSubpassDescription subpass{};
 			VkPipelineColorBlendStateCreateInfo color_info{};
 			VkPipeline graphics_pipeline;
+			std::vector<VkFramebuffer> swap_chain_framebuffers;
 		public:
 			GraphicsPipeline(DeviceHandling& device_pass);
 			~GraphicsPipeline();	
@@ -50,7 +51,8 @@ namespace mage {
 			void change_rasterizer_mode(Window window_pass, VkPolygonMode poly);
 			void config_blending();
 			void config_render_pass(VkFormat format);
-			PipelineInfo default_pipeline_info(PipelineInfo& config_info, DeviceHandling& device_pass);
+			PipelineInfo default_pipeline_info(DeviceHandling& device_pass);
+			void create_framebuffer(DeviceHandling& device_pass);
 	};
 
 }

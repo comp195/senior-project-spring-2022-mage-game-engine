@@ -19,6 +19,7 @@ DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
 	logical_device();
 	create_swap_chain();
 	create_command_pool();
+	create_command_buffer();
 }
 
 // Initialize Vulkan library
@@ -388,8 +389,42 @@ void DeviceHandling::create_command_pool(){
 
 }
 
+void DeviceHandling::create_command_buffer(){
+	VkCommandBufferAllocateInfo allocate_info{};
+	allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocate_info.commandPool = command_pool;
+	allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocate_info.commandBufferCount = 1;
+
+	if (vkAllocateCommandBuffers(device, &allocate_info, &command_buffer) != VK_SUCCESS){
+		std::cerr << "Failed to allocate command buffer" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+// This will later be called in draw_frame
+void DeviceHandling::record_command_buffer(VkCommandBuffer command_buffer, uint32_t image_index, VkRenderPass render_pass){
+	VkCommandBufferBeginInfo begin_info{};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.flags = 0;
+	
+	if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) { 
+		std::cerr << "Failed to begin recording command buffer" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	VkRenderPassBeginInfo render_pass_info{};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_info.renderPass = render_pass;
+
+}
+
 VkDevice DeviceHandling::get_device(){
 	return device;
+}
+
+std::vector<VkImageView> DeviceHandling::get_swap_view(){
+	return swap_image_views;
 }
 
 // Free resources after closed window
