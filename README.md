@@ -33,11 +33,9 @@ After that, simply run the executable with:
 I hope to achieve the following milestones before my Senior Project Day:
 
 * ~~Create a window~~
-* Render a simple triangle
+* ~~R̶e̶n̶d̶e̶r̶ ̶a̶ ̶s̶i̶m̶p̶l̶e̶ ̶t̶r̶i̶a̶n̶g̶l̶e̶~~
 * Render a cube
-* Add motion to rendered objects
-* Respond to user input
-* Add a simple lighting system
+* Add camera and respond to user input
 * Create a basic tutorial displaying the above features
 
 I also hope to achieve this with as much cross-platform support as possible, but seeing as I'm developing on an NVIDIA-driven Linux machine, these particular systems will recieve precidence if time becomes an issue.
