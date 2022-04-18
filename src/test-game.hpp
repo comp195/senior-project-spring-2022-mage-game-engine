@@ -11,6 +11,10 @@ namespace mage {
 		static const int WIDTH = 800;
 		static const int HEIGHT = 600;
 		std::string TITLE = "Mage Testing Window";
+		VkCommandBuffer command_buffer;
+		VkSemaphore image_available_semaphores;
+  		VkSemaphore render_available_semaphores;
+  		VkFence in_flight_fences;
 	public:
 		TestGame();
 		~TestGame();
@@ -18,6 +22,9 @@ namespace mage {
 		DeviceHandling test_device{test_game};
 		GraphicsPipeline test_pipeline{test_device};
 		void run();
+		void record_command_buffer(uint32_t image_index);
+		void draw_frame();
+		void sync_objects();
 	};
 
 }

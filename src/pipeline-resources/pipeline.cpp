@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <array>
 #define GLFW_INCLUDE_VULKAN
 
 using namespace mage;
@@ -40,19 +41,21 @@ void GraphicsPipeline::create_pipeline(DeviceHandling& device_pass){
 
 	// Fillout Vulkan object info regarding shader modules
 	std::cout << "Reading in shader information structures..." << std::endl;
-	VkPipelineShaderStageCreateInfo vertex_info{};
-	vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertex_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertex_info.module = vertex_module;
-	vertex_info.pName = "main";
-
-	VkPipelineShaderStageCreateInfo fragment_info{};
-	fragment_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragment_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	fragment_info.module = fragment_module;
-	fragment_info.pName = "main";
-
-	VkPipelineShaderStageCreateInfo shader_info[] = {vertex_info, fragment_info};
+  	VkPipelineShaderStageCreateInfo shader_info[2];
+  	shader_info[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  	shader_info[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+  	shader_info[0].module = vertex_module;
+  	shader_info[0].pName = "main";
+  	shader_info[0].flags = 0;
+  	shader_info[0].pNext = nullptr;
+  	shader_info[0].pSpecializationInfo = nullptr;
+  	shader_info[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  	shader_info[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  	shader_info[1].module = fragment_module;
+  	shader_info[1].pName = "main";
+  	shader_info[1].flags = 0;
+  	shader_info[1].pNext = nullptr;
+  	shader_info[1].pSpecializationInfo = nullptr;
 
 	std::cout << "Vertex input info structure..." << std::endl;
 	VkPipelineVertexInputStateCreateInfo vertex_input_info{};
@@ -242,26 +245,35 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(DeviceHandling& device_pass
 }
 
 void GraphicsPipeline::create_framebuffer(DeviceHandling& device_pass){
+	std::cout << " - getting swap_view..." << std::endl;
 	std::vector<VkImageView> swap_view = device_pass.get_swap_view();
 	swap_chain_framebuffers.resize(swap_view.size());
+	VkExtent2D swap_vassal = device_pass.get_swap_extent();
 
+	std::cout << " - traversing framebuffers..." << std::endl;
 	for (size_t i = 0; i < swap_view.size(); i++){
-		VkImageView attachments[] = { swap_view[i] };
+		std::cout << " - grabbing attachments..." << std::endl;
+		std::array<VkImageView, 1> attachments = { swap_view[i] };
 		
-		VkFramebufferCreateInfo framebuffer_info{};
-		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_info.renderPass = render_pass;
-		framebuffer_info.attachmentCount = 1;
-		framebuffer_info.pAttachments = attachments;
-		framebuffer_info.width = device_pass.get_swap_extent().width;
-		framebuffer_info.height = device_pass.get_swap_extent().height;
-		framebuffer_info.layers = 1;
+		std::cout << " - creating framebuffer info..." << std::endl;
+    	VkFramebufferCreateInfo framebuffer_info = {};
+    	framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    	framebuffer_info.renderPass = render_pass;
+    	framebuffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+    	framebuffer_info.pAttachments = attachments.data();
+    	framebuffer_info.width = swap_vassal.width;
+    	framebuffer_info.height = swap_vassal.height;
+    	framebuffer_info.layers = 1;
 
+		std::cout << " - creating framebuffer..." << std::endl;
 		if (vkCreateFramebuffer(device_pass.get_device(), &framebuffer_info, nullptr, &swap_chain_framebuffers[i]) != VK_SUCCESS) {
 			std::cerr << "Failed to create framebuffer" << std::endl;
 			exit(EXIT_FAILURE);
 		}
+		std::cout << " - successfully created frambuffer!" << std::endl;
 	}
+
+	std::cout << "Finished creating framebuffer!" << std::endl;
 
 }
 

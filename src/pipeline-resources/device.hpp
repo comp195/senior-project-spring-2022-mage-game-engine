@@ -12,7 +12,7 @@ namespace mage {
 
 	struct QueueIndices {
 	    uint32_t graphics_family;
-	    std::optional<uint32_t> present_family;
+	    uint32_t present_family;
 	    std::optional<bool> graphics_family_has_value = false;
 	    std::optional<bool> present_family_has_value = false;
 	    bool complete() {
@@ -67,12 +67,24 @@ namespace mage {
 		VkFormat get_swap_format(){
 			return swap_image_format;
 		}
+
+		VkCommandPool get_command_pool(){
+			return command_pool;
+		}
+		VkSwapchainKHR get_swap_chain(){
+			return swap_chain;
+		}
+		VkQueue get_graphics_queue(){
+			return graphics_queue;
+		}
+		VkQueue get_present_queue(){
+			return present_queue;
+		}
+
 		std::vector<VkImageView> get_swap_view();
 		void check_glfw_extensions();
 		std::vector<const char*> get_required_extensions();
 		void create_command_pool();
-		void create_command_buffer();
-		void record_command_buffer(VkCommandBuffer command_buffer, uint32_t image_index, VkRenderPass render_pass);
 		VkDevice get_device();
 
 	};

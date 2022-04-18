@@ -18,8 +18,9 @@ DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
 	select_hardware();
 	logical_device();
 	create_swap_chain();
+	create_image_views();
 	create_command_pool();
-	create_command_buffer();
+	
 }
 
 // Initialize Vulkan library
@@ -198,7 +199,7 @@ void DeviceHandling::logical_device(){
 
 	// Handled in a loop to account for multiple possible queues
 	std::vector<VkDeviceQueueCreateInfo> create_info_queue{};
-	std::set<uint32_t> unique_queue_families = {indices.graphics_family, indices.present_family.value()};
+	std::set<uint32_t> unique_queue_families = {indices.graphics_family, indices.present_family};
     float queue_priority = 1.0f;
     for(uint32_t queue_family : unique_queue_families){
     	VkDeviceQueueCreateInfo create_new_info{};
@@ -222,6 +223,7 @@ void DeviceHandling::logical_device(){
     }
 
     vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
+    vkGetDeviceQueue(device, indices.present_family, 0, &present_queue);
 }
 
 
@@ -316,7 +318,7 @@ void DeviceHandling::create_swap_chain() {
 	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	QueueIndices indices = find_families(card);
-	uint32_t queue_indices[] = {indices.graphics_family, indices.present_family.value()};
+	uint32_t queue_indices[] = {indices.graphics_family, indices.present_family};
 	if (indices.graphics_family != indices.present_family) {
 		create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		create_info.queueFamilyIndexCount = 2;
@@ -353,19 +355,15 @@ void DeviceHandling::create_image_views() {
 
 	for (size_t i = 0; i < swap_images.size(); i++) {
 		VkImageViewCreateInfo create_info{};
-		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		create_info.image = swap_images[i];
-		create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		create_info.format = swap_image_format;
-		create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		create_info.subresourceRange.baseMipLevel = 0;
-		create_info.subresourceRange.levelCount = 1;
-		create_info.subresourceRange.baseArrayLayer = 0;
-		create_info.subresourceRange.layerCount = 1;
+    	create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    	create_info.image = swap_images[i];
+    	create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    	create_info.format = swap_image_format;
+    	create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    	create_info.subresourceRange.baseMipLevel = 0;
+    	create_info.subresourceRange.levelCount = 1;
+    	create_info.subresourceRange.baseArrayLayer = 0;
+    	create_info.subresourceRange.layerCount = 1;
 
 		if (vkCreateImageView(device, &create_info, nullptr, &swap_image_views[i]) != VK_SUCCESS) {	
 			std::cerr << "failed to create swap chain";
@@ -386,36 +384,6 @@ void DeviceHandling::create_command_pool(){
 		std::cerr << "failed to create command pool" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-
-}
-
-void DeviceHandling::create_command_buffer(){
-	VkCommandBufferAllocateInfo allocate_info{};
-	allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocate_info.commandPool = command_pool;
-	allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocate_info.commandBufferCount = 1;
-
-	if (vkAllocateCommandBuffers(device, &allocate_info, &command_buffer) != VK_SUCCESS){
-		std::cerr << "Failed to allocate command buffer" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-}
-
-// This will later be called in draw_frame
-void DeviceHandling::record_command_buffer(VkCommandBuffer command_buffer, uint32_t image_index, VkRenderPass render_pass){
-	VkCommandBufferBeginInfo begin_info{};
-	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	begin_info.flags = 0;
-	
-	if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) { 
-		std::cerr << "Failed to begin recording command buffer" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	VkRenderPassBeginInfo render_pass_info{};
-	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	render_pass_info.renderPass = render_pass;
 
 }
 

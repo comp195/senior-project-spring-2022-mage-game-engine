@@ -53,6 +53,16 @@ namespace mage {
 			void config_render_pass(VkFormat format);
 			PipelineInfo default_pipeline_info(DeviceHandling& device_pass);
 			void create_framebuffer(DeviceHandling& device_pass);
+
+			VkRenderPass get_render_pass(){
+				return render_pass;
+			}
+			VkFramebuffer get_swap_framebuffers(int index) { 
+				return swap_chain_framebuffers[index]; 
+			}
+			VkPipeline get_pipeline(){
+				return graphics_pipeline;
+			}
 	};
 
 }
