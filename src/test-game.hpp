@@ -22,6 +22,7 @@ namespace mage {
 		DeviceHandling test_device{test_game};
 		GraphicsPipeline test_pipeline{test_device};
 		void run();
+		void create_command_buffer();
 		void record_command_buffer(uint32_t image_index);
 		void draw_frame();
 		void sync_objects();

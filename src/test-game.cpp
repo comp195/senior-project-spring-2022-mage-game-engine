@@ -9,6 +9,7 @@ TestGame::TestGame() {
 
 // Run window until user wants to close it
 void TestGame::run() {
+	create_command_buffer();
 	while(!test_game.close_window()){
 		glfwPollEvents();
 		draw_frame();
@@ -16,9 +17,7 @@ void TestGame::run() {
 	vkDeviceWaitIdle(test_device.get_device());
 }
 
-// This will later be called in draw_frame
-void TestGame::record_command_buffer(uint32_t image_index){
- 
+void TestGame::create_command_buffer(){
 	std::cout << "Recording command buffer..." << std::endl;
 	VkCommandBufferAllocateInfo allocate_info{};
 	allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -30,7 +29,11 @@ void TestGame::record_command_buffer(uint32_t image_index){
 		std::cerr << "Failed to allocate command buffer" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+}
 
+// This will later be called in draw_frame
+void TestGame::record_command_buffer(uint32_t image_index){
+ 
 	VkCommandBufferBeginInfo begin_info{};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	begin_info.flags = 0;
@@ -117,6 +120,7 @@ void TestGame::draw_frame(){
 		std::cerr << "Failed to submit draw buffer" << std::endl;
 	}
 
+	std::cout << " - creating present_info struct..." << std::endl;
 	VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -129,6 +133,7 @@ void TestGame::draw_frame(){
 
     present_info.pImageIndices = &image_index;
 
+    std::cout << " - finalizing vkQueuePresentKHR..." << std::endl;
     vkQueuePresentKHR(test_device.get_present_queue(), &present_info);
 
 }
