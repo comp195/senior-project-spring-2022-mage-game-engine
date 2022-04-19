@@ -17,10 +17,7 @@ DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
 	create_surface();
 	select_hardware();
 	logical_device();
-	create_swap_chain();
-	create_image_views();
 	create_command_pool();
-	
 }
 
 // Initialize Vulkan library
@@ -257,121 +254,6 @@ SwapChainSupport DeviceHandling::query_support(VkPhysicalDevice device) {
 }
 
 
-// Settings for color depth and surface format
-VkSurfaceFormatKHR DeviceHandling::choose_swap_format(const std::vector<VkSurfaceFormatKHR>& formats) {
-	for (const auto& format : formats) {
-		if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			return format;
-		}
-	}
-
-	return formats[0];
-}
-
-
-// Choose swapping conditions under presentation mode
-VkPresentModeKHR DeviceHandling::choose_swap_mode(const std::vector<VkPresentModeKHR>& modes) {
-	// Choose one of the following:
-	return VK_PRESENT_MODE_IMMEDIATE_KHR; 	 // Immediate rendering, possible tearing
-	// return VK_PRESENT_MODE_FIFO_KHR;	 // Put images into queue when not full
-	// return VK_PRESENT_MODE_FIFO_RELAXED_KHR; // Similar to previous mode, but slightly faster with possible tearing
-	// return VK_PRESENT_MODE_MAILBOX_KHR;	 // Another variation, resource intensive but utilizes triple buffer for 'best quality'
-}
-
-
-// Choose extent of swap, setting resolution of images in swap)
-VkExtent2D DeviceHandling::choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) {
-	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-		return capabilities.currentExtent;
-	} else {
-		int width, height;
-		VkExtent2D actual_extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
-		actual_extent.width = std::clamp(actual_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-		actual_extent.height = std::clamp(actual_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-		return actual_extent;
-	}
-}
-
-
-// Fully create swap chain
-void DeviceHandling::create_swap_chain() {
-	// Run the previously defined functions for desired settings
-	SwapChainSupport swap_support = query_support(card);
-	VkSurfaceFormatKHR surface_format = choose_swap_format(swap_support.formats);
-	VkPresentModeKHR present_mode = choose_swap_mode(swap_support.present_modes);
-	VkExtent2D present_extent = choose_swap_extent(swap_support.capabilities);
-
-	uint32_t image_count = swap_support.capabilities.minImageCount+1;
-	if (swap_support.capabilities.maxImageCount > 0 && image_count > swap_support.capabilities.maxImageCount) {
-		image_count = swap_support.capabilities.maxImageCount;
-	}
-
-	// Creating swap_chain info
-	VkSwapchainCreateInfoKHR create_info{};
-	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	create_info.surface = surface;
-	create_info.minImageCount = image_count;
-	create_info.imageFormat = surface_format.format;
-	create_info.imageColorSpace = surface_format.colorSpace;
-	create_info.imageExtent = present_extent;
-	create_info.imageArrayLayers = 1;
-	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	QueueIndices indices = find_families(card);
-	uint32_t queue_indices[] = {indices.graphics_family, indices.present_family};
-	if (indices.graphics_family != indices.present_family) {
-		create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		create_info.queueFamilyIndexCount = 2;
-		create_info.pQueueFamilyIndices = queue_indices;
-	} else {
-		create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		create_info.queueFamilyIndexCount = 0;
-		create_info.pQueueFamilyIndices = nullptr;
-	}
-
-	create_info.preTransform = swap_support.capabilities.currentTransform;
-	create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	create_info.presentMode = present_mode;
-	create_info.clipped = VK_TRUE;
-	create_info.oldSwapchain = VK_NULL_HANDLE;
-
-	if (vkCreateSwapchainKHR(device, &create_info, nullptr, &swap_chain) != VK_SUCCESS) {
-		std::cerr << "failed to create swap chain";
-	    	exit(EXIT_FAILURE);		
-	}
-
-	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, nullptr);
-	swap_images.resize(image_count);
-	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, swap_images.data());
-	swap_image_format = surface_format.format;
-	swap_extent = swap_extent;
-
-}
-
-
-// Create a view onto the image for VkImage
-void DeviceHandling::create_image_views() {
-	swap_image_views.resize(swap_images.size());
-
-	for (size_t i = 0; i < swap_images.size(); i++) {
-		VkImageViewCreateInfo create_info{};
-    	create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    	create_info.image = swap_images[i];
-    	create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    	create_info.format = swap_image_format;
-    	create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    	create_info.subresourceRange.baseMipLevel = 0;
-    	create_info.subresourceRange.levelCount = 1;
-    	create_info.subresourceRange.baseArrayLayer = 0;
-    	create_info.subresourceRange.layerCount = 1;
-
-		if (vkCreateImageView(device, &create_info, nullptr, &swap_image_views[i]) != VK_SUCCESS) {	
-			std::cerr << "failed to create swap chain";
-	    		exit(EXIT_FAILURE);		
-		}
-	}
-}
-
 void DeviceHandling::create_command_pool(){
 	QueueIndices indices = find_families(card);
 
@@ -385,6 +267,21 @@ void DeviceHandling::create_command_pool(){
 		exit(EXIT_FAILURE);
 	}
 
+}
+
+VkFormat DeviceHandling::find_supported_format(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+  for (VkFormat format : candidates) {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(card, format, &props);
+
+    if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+      return format;
+    } else if (
+        tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+      return format;
+    }
+  }
+  throw std::runtime_error("failed to find supported format!");
 }
 
 VkDevice DeviceHandling::get_device(){

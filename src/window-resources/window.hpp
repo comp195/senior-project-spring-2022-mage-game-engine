@@ -21,6 +21,8 @@ namespace mage {
 		void init_window();
 		bool close_window();
 		void create_surface(VkInstance instance, VkSurfaceKHR *surface);
+		VkExtent2D get_extent() {return {static_cast<uint32_t>(window_width), static_cast<uint32_t>(window_height)}; 
+}
 	};
 
 }

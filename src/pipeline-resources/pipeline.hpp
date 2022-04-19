@@ -23,6 +23,8 @@ namespace mage {
 		//};
 		VkPipelineLayout pipeline_layout = nullptr;
 		VkRenderPass render_pass = nullptr;
+		VkViewport viewport;
+		VkRect2D scissor;
 		uint32_t subpass = 0;
 	};
 	
@@ -30,7 +32,7 @@ namespace mage {
 		private:
 			VkShaderModule vertex_module;
 			VkShaderModule fragment_module;
-			VkDevice device;
+			DeviceHandling &device;
 			VkViewport viewport;
 			VkRect2D scissor{};
 			VkPipelineRasterizationStateCreateInfo rasterizer{};
@@ -41,9 +43,9 @@ namespace mage {
 			VkPipeline graphics_pipeline;
 			std::vector<VkFramebuffer> swap_chain_framebuffers;
 		public:
-			GraphicsPipeline(DeviceHandling& device_pass);
+			GraphicsPipeline(DeviceHandling& device_pass, PipelineInfo& config_info);
 			~GraphicsPipeline();	
-			void create_pipeline(DeviceHandling& device_pass);
+			void create_pipeline(const PipelineInfo config_info);
 			static std::vector<char> read_file(const std::string& file_name);
 			VkShaderModule create_module(const std::vector<char>& data);
 			void create_viewport(VkExtent2D swap_extent);
@@ -51,8 +53,8 @@ namespace mage {
 			void change_rasterizer_mode(Window window_pass, VkPolygonMode poly);
 			void config_blending();
 			void config_render_pass(VkFormat format);
-			PipelineInfo default_pipeline_info(DeviceHandling& device_pass);
-			void create_framebuffer(DeviceHandling& device_pass);
+			static PipelineInfo default_pipeline_info(VkExtent2D swap_extent);
+			void bind(VkCommandBuffer command_buffer);
 
 			VkRenderPass get_render_pass(){
 				return render_pass;

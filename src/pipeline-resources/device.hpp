@@ -58,6 +58,7 @@ namespace mage {
 		VkSurfaceFormatKHR choose_swap_format(const std::vector<VkSurfaceFormatKHR>&);
 		VkPresentModeKHR choose_swap_mode(const std::vector<VkPresentModeKHR>&);
 		VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR&);
+		VkFormat find_supported_format(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 		void create_image_views();
 
 		VkExtent2D get_swap_extent(){
@@ -79,6 +80,21 @@ namespace mage {
 		}
 		VkQueue get_present_queue(){
 			return present_queue;
+		}
+		size_t get_swap_image_size(){
+			return swap_image_views.size();
+		}
+		SwapChainSupport get_swap_chain_support(){
+			return query_support(card);
+		}
+		QueueIndices get_queue_families(){
+			return find_families(card);
+		}
+		VkSurfaceKHR get_surface(){
+			return surface;
+		}
+		VkPhysicalDevice get_card(){
+			return card;
 		}
 
 		std::vector<VkImageView> get_swap_view();
