@@ -67,6 +67,7 @@ void TestGame::create_command_buffer(){
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
     if (vkBeginCommandBuffer(command_buffer[i], &beginInfo) != VK_SUCCESS) {
+    	std::cerr << "Failed to begin creating command_buffer" << std::endl;
     }
 
     VkRenderPassBeginInfo render_pass_info{};
@@ -78,7 +79,7 @@ void TestGame::create_command_buffer(){
     render_pass_info.renderArea.extent = test_swap.get_swap_extent();
 
     std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+    clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
     clear_values[1].depthStencil = {1.0f, 0};
     render_pass_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
     render_pass_info.pClearValues = clear_values.data();
@@ -90,6 +91,7 @@ void TestGame::create_command_buffer(){
 
     vkCmdEndRenderPass(command_buffer[i]);
     if (vkEndCommandBuffer(command_buffer[i]) != VK_SUCCESS) {
+    	std::cerr << "Failed to end command buffer" << std::endl;
     }
   }
 	
@@ -111,6 +113,6 @@ void TestGame::draw_frame() {
 }
 
 
-
 TestGame::~TestGame() {
+	vkDestroyPipelineLayout(test_device.get_device(), pipeline_layout, nullptr);
 }

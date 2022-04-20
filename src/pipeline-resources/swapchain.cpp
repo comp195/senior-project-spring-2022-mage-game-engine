@@ -30,7 +30,6 @@ SwapChainHandling::SwapChainHandling(DeviceHandling &device_pass, VkExtent2D ext
 // Fully create swap chain
 void SwapChainHandling::create_swap_chain() {
 	std::cout << "Attempting to create swap chain..." << std::endl;
-	// Run the previously defined functions for desired settings
 
 	std::cout << " - choosing format, mode, and extent..." << std::endl;
 	SwapChainSupport swap_support = device.get_swap_chain_support();
@@ -45,14 +44,13 @@ void SwapChainHandling::create_swap_chain() {
 	}
 
 	std::cout << " - creating swap chain info..." << std::endl;
-	// Creating swap_chain info
 	VkSwapchainCreateInfoKHR create_info{};
 	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	create_info.surface = device.get_surface();
 	create_info.minImageCount = image_count;
 	create_info.imageFormat = surface_format.format;
 	create_info.imageColorSpace = surface_format.colorSpace;
-	create_info.imageExtent = window_extent;
+	create_info.imageExtent = present_extent;
 	create_info.imageArrayLayers = 1;
 	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -85,7 +83,7 @@ void SwapChainHandling::create_swap_chain() {
 	swap_images.resize(image_count);
 	vkGetSwapchainImagesKHR(device.get_device(), swap_chain, &image_count, swap_images.data());
 	swap_image_format = surface_format.format;
-	swap_extent = window_extent;
+	swap_extent = present_extent;
 
 	std::cout << " - swap chain creation successful!" << std::endl;
 
@@ -94,23 +92,25 @@ void SwapChainHandling::create_swap_chain() {
 
 VkSurfaceFormatKHR SwapChainHandling::choose_swap_format(const std::vector<VkSurfaceFormatKHR>& formats) {
 	std::cout << "   - choosing swap format..." << std::endl;
-	for (const auto& format : formats) {
-		if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			return format;
-		}
-	}
-	return formats[0];
+  for (const auto &avilable_format : formats) {
+    if (avilable_format.format == VK_FORMAT_B8G8R8A8_UNORM &&
+        avilable_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      return avilable_format;
+    }
+  }
+  return formats[0];
 }
 
 
 // Choose swapping conditions under presentation mode
 VkPresentModeKHR SwapChainHandling::choose_swap_mode(const std::vector<VkPresentModeKHR>& modes) {
 	std::cout << "   - choosing swap mode..." << std::endl;
-	// Choose one of the following:
-	return VK_PRESENT_MODE_IMMEDIATE_KHR; 	 // Immediate rendering, possible tearing
-	// return VK_PRESENT_MODE_FIFO_KHR;	 // Put images into queue when not full
-	// return VK_PRESENT_MODE_FIFO_RELAXED_KHR; // Similar to previous mode, but slightly faster with possible tearing
-	// return VK_PRESENT_MODE_MAILBOX_KHR;	 // Another variation, resource intensive but utilizes triple buffer for 'best quality'
+ 	for (const auto &available_present_modes : modes) {
+    if (available_present_modes == VK_PRESENT_MODE_MAILBOX_KHR) {
+      return available_present_modes;
+    }
+  }
+  return VK_PRESENT_MODE_FIFO_KHR;
 }
 
 
@@ -150,7 +150,7 @@ void SwapChainHandling::create_image_views() {
     std::cout << " - attempting to create image view..." << std::endl;
 		if (vkCreateImageView(device.get_device(), &create_info, nullptr, &swap_image_views[i]) != VK_SUCCESS) {	
 			std::cerr << "failed to create swap chain";
-	    		exit(EXIT_FAILURE);		
+	    exit(EXIT_FAILURE);		
 		}
 	}
 
@@ -179,21 +179,23 @@ void SwapChainHandling::create_render_pass(){
   depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	std::cout << " - creating info for color_attachment..." << std::endl;
-	VkAttachmentDescription color_attachment{};
-	color_attachment.format = device.get_swap_format();
+	VkAttachmentDescription color_attachment = {};
+	color_attachment.format = swap_image_format;
 	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	std::cout << "   - referencing color_reference..." << std::endl;
-	VkAttachmentReference color_reference{};
+	VkAttachmentReference color_reference = {};
 	color_reference.attachment = 0;
 	color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	std::cout << " - creating info for subpass..." << std::endl;
-	VkSubpassDescription subpass{};
+	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &color_reference;
@@ -211,7 +213,7 @@ void SwapChainHandling::create_render_pass(){
 	std::array<VkAttachmentDescription, 2> attachments = {color_attachment, depth_attachment};
 
 	std::cout << " - creating info for render_pass..." << std::endl;
-	VkRenderPassCreateInfo render_info{};
+	VkRenderPassCreateInfo render_info = {};
   render_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   render_info.attachmentCount = static_cast<uint32_t>(attachments.size());
   render_info.pAttachments = attachments.data();
@@ -413,42 +415,65 @@ VkResult SwapChainHandling::submit_command_buffers(const VkCommandBuffer *buffer
   VkSubmitInfo submit_info = {};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-  VkSemaphore waitSemaphores[] = {image_available_semaphores[current_frame]};
-  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSemaphore wait_semaphores[] = {image_available_semaphores[current_frame]};
+  VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   submit_info.waitSemaphoreCount = 1;
-  submit_info.pWaitSemaphores = waitSemaphores;
-  submit_info.pWaitDstStageMask = waitStages;
+  submit_info.pWaitSemaphores = wait_semaphores;
+  submit_info.pWaitDstStageMask = wait_stages;
 
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = buffers;
 
-  VkSemaphore signalSemaphores[] = {render_available_semaphores[current_frame]};
+  VkSemaphore signal_semaphores[] = {render_available_semaphores[current_frame]};
   submit_info.signalSemaphoreCount = 1;
-  submit_info.pSignalSemaphores = signalSemaphores;
+  submit_info.pSignalSemaphores = signal_semaphores;
 
+  std::cout << " - reseting fences and suibmiting graphics queue..." << std::endl;
   vkResetFences(device.get_device(), 1, &in_flight_fences[current_frame]);
-  if (vkQueueSubmit(device.get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame]) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to submit draw command buffer!");
+  if (vkQueueSubmit(device.get_graphics_queue(), 1, &submit_info, in_flight_fences[current_frame]) != VK_SUCCESS) {
+  	std::cerr << "Failed to submit graphics queue" << std::endl;
+  	exit(EXIT_FAILURE);
   }
 
+  std::cout << " - creating info for present_info..." << std::endl;
   VkPresentInfoKHR present_info = {};
   present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   present_info.waitSemaphoreCount = 1;
-  present_info.pWaitSemaphores = signalSemaphores;
+  present_info.pWaitSemaphores = signal_semaphores;
   VkSwapchainKHR swap_chains[] = {swap_chain};
   present_info.swapchainCount = 1;
   present_info.pSwapchains = swap_chains;
   present_info.pImageIndices = image_index;
-
   auto result = vkQueuePresentKHR(device.get_present_queue(), &present_info);
-
   current_frame = (current_frame + 1) % MAX_FRAMES;
+
+  std::cout << " - command buffer submission successful!" << std::endl;
 
   return result;
 }
 
 
 SwapChainHandling::~SwapChainHandling() {
-
+  if (swap_chain != nullptr) {
+    vkDestroySwapchainKHR(device.get_device(), swap_chain, nullptr);
+    swap_chain = nullptr;
+  }
+  for (auto image_view : swap_image_views) {
+    vkDestroyImageView(device.get_device(), image_view, nullptr);
+  }
+  for (int i = 0; i < depth_images.size(); i++) {
+    vkDestroyImageView(device.get_device(), depth_images_views[i], nullptr);
+    vkDestroyImage(device.get_device(), depth_images[i], nullptr);
+    vkFreeMemory(device.get_device(), depth_images_memories[i], nullptr);
+  }
+  for (auto framebuffer : swap_chain_framebuffers) {
+    vkDestroyFramebuffer(device.get_device(), framebuffer, nullptr);
+  }
+  for (size_t i = 0; i < MAX_FRAMES; i++) {
+    vkDestroySemaphore(device.get_device(), render_available_semaphores[i], nullptr);
+    vkDestroySemaphore(device.get_device(), image_available_semaphores[i], nullptr);
+    vkDestroyFence(device.get_device(), in_flight_fences[i], nullptr);
+  }
+  swap_image_views.clear();
+  vkDestroyRenderPass(device.get_device(), render_pass, nullptr);
 }

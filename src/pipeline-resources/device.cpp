@@ -13,17 +13,21 @@ using namespace mage;
 const std::vector<const char*> device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 DeviceHandling::DeviceHandling(Window &window_pass) : window(window_pass){
+	std::cout << std::endl << "=== DEVICE HANDLING ===" << std::endl;
 	init_vulkan_instance();
 	create_surface();
 	select_hardware();
 	logical_device();
 	create_command_pool();
+	std:: cout << "=== DEVICE HANDLING SUCCESSFUL ===" << std::endl;
 }
 
 // Initialize Vulkan library
 void DeviceHandling::init_vulkan_instance(){
+	std::cout << "Attempting to initialize Vulkan instance..." << std::endl;
 
 	// Creating data regarding the application (left pretty blank for now)
+	std::cout << " - creating application info..." << std::endl;
 	VkApplicationInfo app_data{};
     app_data.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     VkInstanceCreateInfo create_info{};
@@ -31,6 +35,7 @@ void DeviceHandling::init_vulkan_instance(){
     create_info.pApplicationInfo = &app_data;
 
     // Ensure glfw extensions are present
+    std::cout << " - ensuring GLFW extensions are present..." << std::endl;
     uint32_t num_glfw_extensions = 0;
     const char** glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&num_glfw_extensions);
@@ -39,34 +44,37 @@ void DeviceHandling::init_vulkan_instance(){
     create_info.enabledLayerCount = 0;
 
     // Attempt to create instance
+    std::cout << " - attempting to create instance..." << std::endl;
     if (vkCreateInstance(&create_info, nullptr, &instance) != VK_SUCCESS) {
 	    std::cerr << "failed to create instance";
 	    exit(EXIT_FAILURE);
 	}
-
 	check_glfw_extensions();
-
+	std::cout << " - Vulkan instance creation successful!" << std::endl;
 }
 
 
 // Search and select necessary graphics card from system
 void DeviceHandling::select_hardware(){
+	std::cout << "Attempting to locate physical hardware for graphics calculations..." << std::endl;
+
+	std::cout << " - searching for any hardware whatsoever..." << std::endl;
 	uint32_t num_devices = 0;
 	vkEnumeratePhysicalDevices(instance, &num_devices, nullptr);
-
 	if (num_devices == 0){
-		std::cerr << "Error finding hardware.\n";
+		std::cerr << "Error finding any hardware.\n";
 		exit(EXIT_FAILURE);
 	}
 
 	//This area can be fleshed out in the future to select optimal GPU when multiple are present
+	std::cout << " - selecting optimal device..." << std::endl;
 	VkPhysicalDeviceProperties properties;
 	std::vector<VkPhysicalDevice> devices(num_devices);
 	vkEnumeratePhysicalDevices(instance, &num_devices, devices.data());
-	std::cout << "Found " << num_devices << " device(s)" << std::endl;
+	std::cout << "   - found " << num_devices << " device(s)" << std::endl;
 	for (const auto& device : devices) {
 		vkGetPhysicalDeviceProperties(device, &properties);
-		std::cout << "Currently checking " << properties.deviceName << "..." << std::endl;
+		std::cout << "     - currently checking " << properties.deviceName << "..." << std::endl;
 		if (suitable_device(device)) {
             		card = device;
             		break;
@@ -79,28 +87,29 @@ void DeviceHandling::select_hardware(){
 	} 
 
 	vkGetPhysicalDeviceProperties(card, &properties);
-	std::cout << "Selected device: " << properties.deviceName << std::endl;
+	std::cout << " - selected device: " << properties.deviceName << std::endl;
 
 }
 
 
 void DeviceHandling::check_glfw_extensions(){
+	std::cout << "   - checking GLFW extensions..." << std::endl;
 	uint32_t num_extensions = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &num_extensions, nullptr);
 	std::vector<VkExtensionProperties> extensions(num_extensions);
 	vkEnumerateInstanceExtensionProperties(nullptr, &num_extensions, extensions.data());
-	std::cout << "Available Extensions:" << std::endl;
+	std::cout << "   - available extensions:" << std::endl;
 	std::unordered_set<std::string> list;
 	for (const auto &extension : extensions){
-		std::cout << " - " << extension.extensionName << std::endl;
+		std::cout << "     - " << extension.extensionName << std::endl;
 		list.insert(extension.extensionName);
 	}
 
 	bool quit = false;
-	std::cout << "Required Extensions" << std::endl;
+	std::cout << "   - required extensions" << std::endl;
 	auto required_extensions = get_required_extensions();
 	for (const auto &required_extension : required_extensions){
-		std::cout << " - " << required_extension << std::endl;
+		std::cout << "     - " << required_extension << std::endl;
 		if (list.find(required_extension) == list.end()) {
 			std::cerr << "Missing required glfw extension: " << required_extension << std::endl;
 			quit = true;
@@ -110,8 +119,6 @@ void DeviceHandling::check_glfw_extensions(){
 	if (quit){
 		exit(EXIT_FAILURE);
 	}
-
-
 }
 
 
@@ -128,14 +135,11 @@ std::vector<const char*> DeviceHandling::get_required_extensions(){
 bool DeviceHandling::suitable_device(VkPhysicalDevice device){
 	QueueIndices indices = find_families(device);
 	bool extensions_supported = check_extension_support(device);
-	std::cout << "Device has all required extensions" << std::endl;
-
 	bool swap_support = false;
 	if (extensions_supported) {
 		SwapChainSupport support = query_support(device);
 		swap_support = !support.formats.empty() && !support.present_modes.empty();
 	}
-
 	return indices.complete() && swap_support && extensions_supported;
 }
 
@@ -192,9 +196,11 @@ QueueIndices DeviceHandling::find_families(VkPhysicalDevice device) {
 
 // Interfaces physical device with queues
 void DeviceHandling::logical_device(){
+	std::cout << "Attempting to create logical Vulkan device..." << std::endl;
 	QueueIndices indices = find_families(card);
 
 	// Handled in a loop to account for multiple possible queues
+	std::cout << " - creating info for info_queue..." << std::endl;
 	std::vector<VkDeviceQueueCreateInfo> create_info_queue{};
 	std::set<uint32_t> unique_queue_families = {indices.graphics_family, indices.present_family};
     float queue_priority = 1.0f;
@@ -207,6 +213,7 @@ void DeviceHandling::logical_device(){
     	create_info_queue.push_back(create_new_info);
     }
 
+    std::cout << " - creating info for device..." << std::endl;
     VkDeviceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     create_info.queueCreateInfoCount = static_cast<uint32_t>(create_info_queue.size());
@@ -215,19 +222,25 @@ void DeviceHandling::logical_device(){
     create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     create_info.ppEnabledExtensionNames = device_extensions.data();
 
+    std::cout << " - attempting to create device..." << std::endl;
     if (vkCreateDevice(card, &create_info, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("failed to create logical device!");
     }
 
+    std::cout << " - appending graphics_queue and present_queue..." << std::endl;
     vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
     vkGetDeviceQueue(device, indices.present_family, 0, &present_queue);
+
+    std::cout << " - link between physical card and logical device successful!" << std::endl;
 }
 
 
 // Attempts to create surface to connect Vulkan to window
 // Using GLFW API for maximum cross-platform support
 void DeviceHandling::create_surface() {
+	std::cout << "Attempting to connect Vulkan to window surface..." << std::endl;
 	window.create_surface(instance, &surface);
+	std::cout << " - surface creation successful!" << std::endl;
 }
 
 
@@ -255,17 +268,17 @@ SwapChainSupport DeviceHandling::query_support(VkPhysicalDevice device) {
 
 
 void DeviceHandling::create_command_pool(){
+	std::cout << "Attempting to create command pool..." << std::endl;
 	QueueIndices indices = find_families(card);
-
 	VkCommandPoolCreateInfo pool_info{};
 	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	pool_info.queueFamilyIndex = indices.graphics_family;
 	pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
 	if (vkCreateCommandPool(device, &pool_info, nullptr, &command_pool) != VK_SUCCESS){
 		std::cerr << "failed to create command pool" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	std::cout << " - create pool creation successful!" << std::endl;
 
 }
 
@@ -284,23 +297,10 @@ VkFormat DeviceHandling::find_supported_format(const std::vector<VkFormat> &cand
   throw std::runtime_error("failed to find supported format!");
 }
 
-VkDevice DeviceHandling::get_device(){
-	return device;
-}
-
-std::vector<VkImageView> DeviceHandling::get_swap_view(){
-	return swap_image_views;
-}
-
 // Free resources after closed window
 DeviceHandling::~DeviceHandling(){
-	for (auto image_view : swap_image_views) {
-		vkDestroyImageView(device, image_view, nullptr);
-	}
-
 	vkDestroyInstance(instance, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
-    vkDestroyInstance(instance, nullptr);
-	vkDestroySwapchainKHR(device, swap_chain, nullptr);
+	vkDestroyCommandPool(device, command_pool, nullptr);
 }
