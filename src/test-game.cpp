@@ -1,6 +1,11 @@
 #include "test-game.hpp"
-#include <iostream>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
+#include <iostream>
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -8,8 +13,14 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <chrono>
 
 using namespace mage;
+
+struct push_constant_data {
+  glm::vec4 transform{1.f};
+  glm::vec3 color;
+};
 
 TestGame::TestGame() {
 	create_pipeline();
@@ -18,6 +29,7 @@ TestGame::TestGame() {
 
 // Run window until user wants to close it
 void TestGame::run() {
+  test_camera.set_view_direction(glm::vec3{0.f}, glm::vec3{0.5f, 0.f, 1.f});
 	while(!test_game.close_window()){
 		glfwPollEvents();
 		draw_frame();
@@ -29,13 +41,19 @@ void TestGame::run() {
 void TestGame::create_pipeline(){
 	std::cout << "Attempting to create pipeline..." << std::endl;
 
+  std::cout << " - filling data for push constants..." << std::endl;
+  VkPushConstantRange push_constant_range{};
+  push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  push_constant_range.offset = 0;
+  push_constant_range.size = sizeof(push_constant_data);
+
 	std::cout << " - creating info for pipeline layout..." << std::endl;
 	VkPipelineLayoutCreateInfo pipeline_layout_info{};
  	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
  	pipeline_layout_info.setLayoutCount = 0;
   	pipeline_layout_info.pSetLayouts = nullptr;
-  	pipeline_layout_info.pushConstantRangeCount = 0;
-  	pipeline_layout_info.pPushConstantRanges = nullptr;
+  	pipeline_layout_info.pushConstantRangeCount = 1;
+  	pipeline_layout_info.pPushConstantRanges = &push_constant_range;
   	std::cout << " - creating pipeline layout..." << std::endl;
   	if (vkCreatePipelineLayout(test_device.get_device(), &pipeline_layout_info, nullptr, &pipeline_layout) != VK_SUCCESS) {
   		std::cerr << "Failed to create pipeline layout" << std::endl;
@@ -86,8 +104,22 @@ void TestGame::create_command_buffer(){
 
     vkCmdBeginRenderPass(command_buffer[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    test_pipeline->bind(command_buffer[i]);
-    vkCmdDraw(command_buffer[i], 3, 1, 0, 0);
+    auto projection_view = test_camera.get_projection_matrix() * test_camera.get_view_matrix();
+
+    for (auto &object : game_objects) {
+      object.transform.rotation.y = glm::mod(object.transform.rotation.y + 0.01f, glm::two_pi<float>());
+      object.transform.rotation.x = glm::mod(object.transform.rotation.x + 0.005f, glm::two_pi<float>());
+
+      push_constant_data push{};
+      push.color = object.color;
+      push.transform = projection_view * object.transform.mat4();
+
+      vkCmdPushConstants(command_buffer[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                         0, sizeof(push_constant_data), &push);
+
+      test_pipeline->bind(command_buffer[i]);
+      vkCmdDraw(command_buffer[i], 3, 1, 0, 0);
+    }
 
     vkCmdEndRenderPass(command_buffer[i]);
     if (vkEndCommandBuffer(command_buffer[i]) != VK_SUCCESS) {

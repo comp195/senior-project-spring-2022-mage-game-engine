@@ -4,6 +4,7 @@ project(mage-game-engine)
 set(CMAKE_CXX_STANDARD 17)
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
+find_package(glm REQUIRED)
 set(GLFW_LIB glfw)
 message(STATUS "Found GLFW")
 
