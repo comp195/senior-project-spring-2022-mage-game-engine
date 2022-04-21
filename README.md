@@ -2,21 +2,39 @@
 
 _MAGE_ (MAGE Amazing Game Engine) is the final senior project of Jordan Scharkey. It is a Vulkan-based, 3D game engine written primarily in C++.
 
-## Dependencies and Compiling
+## Dependencies
 
-#### Vulkan, GLFW, and glslc
+#### Vulkan [[Windows](https://vulkan.lunarg.com/) / [Linux](https://vulkan-tutorial.com/Development_environment#page_Vulkan-Packages)]
 
-Vulkan drivers for whichever operating system you are using will be required. You can find out more regarding this [here.](https://www.vulkan.org/tools#vulkan-gpu-resources) You will also need GLFW, a library that helps with window creation. You can read about that, along with additional dependency setup, [here.](https://vulkan-tutorial.com/Development_environment) We will be using the shader compiler [glslc](https://github.com/google/shaderc/blob/main/downloads.md), which will also be required as a dependency.
+Vulkan is a graphics API and serves as the main interface between our game engine and the hardware that will computing our graphics calculations. Vulkan is the rising industry standard in this regard, with OpenGL being its popular predecessor still widely used today. The Vulkan SDK will be required to run this instance of MAGE.
+
+#### GLFW [[Windows](https://www.glfw.org/) / [Linux](https://vulkan-tutorial.com/Development_environment#page_GLFW-2)]
+
+GLFW is a window creation API that is common amongst amatuer game engines both Vulkan and OpenGL alike. GLFW also assists with keyboard input monitoring for our camera.
+
+#### glm [[Windows](https://github.com/g-truc/glm/releases) / [Linux](https://vulkan-tutorial.com/Development_environment#page_GLM-2)]
+
+glm is a mathematics API that helps us handle formulas and computations with matrices in a relatively easy manner.
+
+#### CMake [[Windows](https://cmake.org/download/) / [Linux](https://www.linuxfordevices.com/tutorials/install-cmake-on-linux)]
+
+CMake is a cross-platform C++ tool that creates a Makefile for our project. A Makefile is used to compile our code and build an executable for us to run our project.
+
+#### [glslc](https://github.com/google/shaderc/blob/main/downloads.md)
+
+glslc is a shader compiling tool used to convert our vertex and fragment shaders (written in "glsl") into program-readable bytecode. glslc is a Google-based project, and alternatives like the Khronos glslangValidator can be used instead, but would require changes in the shader compilation scripts.
+
+## Compiling and Building
 
 #### Compiling Shaders
 
-Use the script for your respective operating system to compile shaders before running code. Note: the .bat file for Windows users currently requires manual input of glslc.exe location on personal system, but I will look into fixing this in the future.
+Shaders hold information of what our program wants to render, and as such it is required that we compile our shaders into program-readable bytecode before attempting to run the program. Use the script of your respective operating system to do so.
+
+*Note: The Windows .bat file requires manual changes to point towards the directory of wherever glslc is located on your machine.*
 
 #### Using CMake to Build
 
-I've chosen to compile with CMake, as it offers better cross-platform compatability. After cloning the repository, you can create a "mage-game-engine" executable by generating a Makefile using CMake.
-
-On Linux, this can be achieved by using the following commands:
+After cloning the repository and compiling our vertex and fragment shaders, you can create a "mage-game-engine" executable by generating a Makefile using CMake. This can be achieved by using the following commands:
 
 ` > cd /path/to/cloned/repository/ `
 
