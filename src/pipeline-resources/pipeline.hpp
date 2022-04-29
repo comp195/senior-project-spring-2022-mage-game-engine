@@ -8,6 +8,7 @@ namespace mage {
 
 	struct PipelineInfo {
 		VkPipelineInputAssemblyStateCreateInfo input_assembly_info;
+		VkPipelineViewportStateCreateInfo viewport_info;
 		VkPipelineRasterizationStateCreateInfo rasterization_info;
 		VkPipelineMultisampleStateCreateInfo multisample_info;
 		VkPipelineColorBlendAttachmentState color_blend_attachment;
@@ -15,7 +16,6 @@ namespace mage {
 		VkPipelineDepthStencilStateCreateInfo depth_stencil_info;
 		VkPipelineLayout pipeline_layout = nullptr;
 		VkRenderPass render_pass = nullptr;
-		VkViewport viewport;
 		VkRect2D scissor;
 		uint32_t subpass = 0;
 	};
@@ -32,7 +32,7 @@ namespace mage {
 			void create_pipeline(const PipelineInfo config_info);
 			static std::vector<char> read_file(const std::string& file_name);
 			VkShaderModule create_module(const std::vector<char>& data);
-			static PipelineInfo default_pipeline_info(VkExtent2D swap_extent);
+			static void default_pipeline_info(PipelineInfo &configInfo);
 			void bind(VkCommandBuffer command_buffer);
 
 			VkPipeline get_pipeline(){return graphics_pipeline;}

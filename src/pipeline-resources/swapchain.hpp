@@ -4,6 +4,7 @@
 #include "pipeline.hpp"
 #include "device.hpp"
 #include <vector>
+#include <memory>
 
 namespace mage {
 
@@ -14,6 +15,7 @@ namespace mage {
 		DeviceHandling &device;
 		VkExtent2D window_extent;
 		VkFormat swap_image_format;
+		VkFormat swap_depth_format;
 		VkExtent2D swap_extent;
 		VkSwapchainKHR swap_chain;
   		std::vector<VkFramebuffer> swap_chain_framebuffers;
@@ -27,8 +29,10 @@ namespace mage {
   		std::vector<VkSemaphore> render_available_semaphores;
   		std::vector<VkFence> in_flight_fences;
   		std::vector<VkFence> images_in_flight;
+  		std::shared_ptr<SwapChainHandling> old_swapchain;
 	public:
 		SwapChainHandling(DeviceHandling &device_pass, VkExtent2D window_extent);
+		SwapChainHandling(DeviceHandling &device_pass, VkExtent2D window_extent, std::shared_ptr<SwapChainHandling> previous);
 		~SwapChainHandling();
 		void create_swap_chain();
 		void create_image_views();
@@ -45,10 +49,14 @@ namespace mage {
 		VkResult acquire_next_image(uint32_t *image_index);
 		VkResult submit_command_buffers(const VkCommandBuffer *buffers, uint32_t *image_index);
 
+		int get_max_frames(){return MAX_FRAMES;}
 		VkExtent2D get_swap_extent(){return swap_extent;}
 		VkRenderPass get_render_pass(){return render_pass;}
 		VkFramebuffer get_framebuffers(int index) {return swap_chain_framebuffers[index];}
 		size_t get_image_count(){return swap_images.size();}
+		bool compare_swap_formats(const SwapChainHandling &swapchain) const {
+    		return swapchain.swap_depth_format == swap_depth_format && swapchain.swap_image_format == swap_image_format;
+  		}
 	};
 
 }

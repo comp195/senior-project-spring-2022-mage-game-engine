@@ -1,4 +1,5 @@
 #include "pipeline.hpp"
+#include "../object-resources/model.hpp"
 
 #include <cassert>
 #include <vector>
@@ -46,20 +47,14 @@ void GraphicsPipeline::create_pipeline(const PipelineInfo config_info){
   	shader_info[1].pSpecializationInfo = nullptr;
 
 	std::cout << " - vertex input info structure..." << std::endl;
-	VkPipelineVertexInputStateCreateInfo vertex_input_info{};
+	auto binding_descriptions = GameModel::Vertex::get_binding_descriptions();
+  	auto attribute_descriptions = GameModel::Vertex::get_attribute_descriptions();
+  	VkPipelineVertexInputStateCreateInfo vertex_input_info{};
   	vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  	vertex_input_info.vertexAttributeDescriptionCount = 0;
-  	vertex_input_info.vertexBindingDescriptionCount = 0;
-  	vertex_input_info.pVertexAttributeDescriptions = nullptr;
-  	vertex_input_info.pVertexBindingDescriptions = nullptr;
-
-  	std::cout << " - viewport info..." << std::endl;
-  	VkPipelineViewportStateCreateInfo viewport_info{};
-  	viewport_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-  	viewport_info.viewportCount = 1;
-  	viewport_info.pViewports = &config_info.viewport;
-  	viewport_info.scissorCount = 1;
-  	viewport_info.pScissors = &config_info.scissor;
+  	vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
+  	vertex_input_info.vertexBindingDescriptionCount = static_cast<uint32_t>(binding_descriptions.size());
+  	vertex_input_info.pVertexAttributeDescriptions = attribute_descriptions.data();
+  	vertex_input_info.pVertexBindingDescriptions = binding_descriptions.data();
 
 	// Now to put it all together...
 	std::cout << " - attempting to bring together pipeline information..." << std::endl;
@@ -69,7 +64,7 @@ void GraphicsPipeline::create_pipeline(const PipelineInfo config_info){
 	pipe_info.pStages = shader_info;
 	pipe_info.pVertexInputState = &vertex_input_info;
 	pipe_info.pInputAssemblyState = &config_info.input_assembly_info;
-	pipe_info.pViewportState = &viewport_info;
+	pipe_info.pViewportState = &config_info.viewport_info;
 	pipe_info.pRasterizationState = &config_info.rasterization_info;
 	pipe_info.pMultisampleState = &config_info.multisample_info;
 	pipe_info.pColorBlendState = &config_info.color_blend_info;
@@ -133,26 +128,20 @@ VkShaderModule GraphicsPipeline::create_module(const std::vector<char>& data){
 
 
 
-PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
-	PipelineInfo config_info{};
-
-	std::cout << " - input_assembly_info..." << std::endl;
+void GraphicsPipeline::default_pipeline_info(PipelineInfo &config_info){
+	std::cout << "   - input_assembly_info..." << std::endl;
 	config_info.input_assembly_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	config_info.input_assembly_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	config_info.input_assembly_info.primitiveRestartEnable = VK_FALSE;
 
-	std::cout << " - viewport_info..." << std::endl;
-	config_info.viewport.x = 0.0f;
-	config_info.viewport.y = 0.0f;
-	config_info.viewport.width = static_cast<float>(swap_extent.width);
-	config_info.viewport.height = static_cast<float>(swap_extent.height);
-	config_info.viewport.minDepth = 0.0f;
-	config_info.viewport.maxDepth = 1.0f;
+	std::cout << "   - viewport_info..." << std::endl;
+	config_info.viewport_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	config_info.viewport_info.viewportCount = 1;
+	config_info.viewport_info.pViewports = nullptr;
+	config_info.viewport_info.scissorCount = 1;
+	config_info.viewport_info.pScissors = nullptr;
 
-	config_info.scissor.offset = {0, 0};
-	config_info.scissor.extent = {swap_extent.width, swap_extent.height};
-
-	std::cout << " - rasterization_info..." << std::endl;
+	std::cout << "   - rasterization_info..." << std::endl;
 	config_info.rasterization_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	config_info.rasterization_info.depthClampEnable = VK_FALSE;
 	config_info.rasterization_info.rasterizerDiscardEnable = VK_FALSE;
@@ -165,7 +154,7 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
   	config_info.rasterization_info.depthBiasClamp = 0.0f;         
   	config_info.rasterization_info.depthBiasSlopeFactor = 0.0f;   
 	
-	std::cout << " - multisample_info..." << std::endl;
+	std::cout << "   - multisample_info..." << std::endl;
 	config_info.multisample_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	config_info.multisample_info.sampleShadingEnable = VK_FALSE;
 	config_info.multisample_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -174,7 +163,7 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
   	config_info.multisample_info.alphaToCoverageEnable = VK_FALSE;  
   	config_info.multisample_info.alphaToOneEnable = VK_FALSE;     
 
-	std::cout << " - color_blend_attachment..." << std::endl;
+	std::cout << "   - color_blend_attachment..." << std::endl;
 	config_info.color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	config_info.color_blend_attachment.blendEnable = VK_FALSE;
   	config_info.color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  
@@ -184,7 +173,7 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
   	config_info.color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;  
   	config_info.color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;              
 	
-	std::cout << " - color_blend_info..." << std::endl;
+	std::cout << "   - color_blend_info..." << std::endl;
 	config_info.color_blend_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	config_info.color_blend_info.logicOpEnable = VK_FALSE;
 	config_info.color_blend_info.logicOp = VK_LOGIC_OP_COPY; 
@@ -195,7 +184,7 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
   	config_info.color_blend_info.blendConstants[2] = 0.0f;  
   	config_info.color_blend_info.blendConstants[3] = 0.0f;  
 
-	std::cout << " - depth_stencil_info..." << std::endl;
+	std::cout << "   - depth_stencil_info..." << std::endl;
 	config_info.depth_stencil_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	config_info.depth_stencil_info.depthTestEnable = VK_TRUE;
 	config_info.depth_stencil_info.depthWriteEnable = VK_TRUE;
@@ -206,9 +195,6 @@ PipelineInfo GraphicsPipeline::default_pipeline_info(VkExtent2D swap_extent){
 	config_info.depth_stencil_info.stencilTestEnable = VK_FALSE;
 	config_info.depth_stencil_info.front = {};  
   	config_info.depth_stencil_info.back = {};   
-
-	std::cout << " - returning config_info..." << std::endl;
-	return config_info;
 }
 
 void GraphicsPipeline::bind(VkCommandBuffer command_buffer) {

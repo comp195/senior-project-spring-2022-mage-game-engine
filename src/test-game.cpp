@@ -1,4 +1,5 @@
 #include "test-game.hpp"
+#include "object-resources/transport.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -17,134 +18,106 @@
 
 using namespace mage;
 
-struct push_constant_data {
-  glm::vec4 transform{1.f};
-  glm::vec3 color;
-};
-
 TestGame::TestGame() {
-	create_pipeline();
-	create_command_buffer();
+  std::cout << std::endl << "=== LOADING GAME OBJECTS ===" << std::endl; 
+	load_game_objects();
+  std::cout << "=== LOADING GAME SUCCESSFUL ===" << std::endl;
 }
 
 // Run window until user wants to close it
 void TestGame::run() {
+  std::cout << "Attempting to begin running game..." << std::endl;
+
+  std::cout << " - handling pipeline creation to transport..." << std::endl;
+  TransportPass test_transport{test_device, test_artist.get_swapchain_render_pass()};
+  std::cout << " - initializing camera..." << std::endl;
   test_camera.set_view_direction(glm::vec3{0.f}, glm::vec3{0.5f, 0.f, 1.f});
+
 	while(!test_game.close_window()){
 		glfwPollEvents();
-		draw_frame();
+    float aspect_ratio = test_artist.get_aspect_ratio();
+    test_camera.set_perspective_projection(glm::radians(50.f), aspect_ratio, 0.1f, 10.f);
+    if (auto command_buffer = test_artist.draw_start()){
+      test_artist.swapchain_render_start(command_buffer);
+      test_transport.render_game_objects(command_buffer, game_objects, test_camera);
+      test_artist.swapchain_render_end(command_buffer);
+      test_artist.draw_end();
+    }
 	}
 	vkDeviceWaitIdle(test_device.get_device());
 }
 
+// The specific values for this test cube are provided by https://github.com/blurrypiano
+std::unique_ptr<GameModel> create_cube_model(DeviceHandling &device, glm::vec3 offset) {
+  std::vector<GameModel::Vertex> vertices{
 
-void TestGame::create_pipeline(){
-	std::cout << "Attempting to create pipeline..." << std::endl;
+      // left face (white)
+      {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+      {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+      {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
+      {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+      {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
+      {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
 
-  std::cout << " - filling data for push constants..." << std::endl;
-  VkPushConstantRange push_constant_range{};
-  push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  push_constant_range.offset = 0;
-  push_constant_range.size = sizeof(push_constant_data);
+      // right face (yellow)
+      {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+      {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+      {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
+      {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+      {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
+      {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
 
-	std::cout << " - creating info for pipeline layout..." << std::endl;
-	VkPipelineLayoutCreateInfo pipeline_layout_info{};
- 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
- 	pipeline_layout_info.setLayoutCount = 0;
-  	pipeline_layout_info.pSetLayouts = nullptr;
-  	pipeline_layout_info.pushConstantRangeCount = 1;
-  	pipeline_layout_info.pPushConstantRanges = &push_constant_range;
-  	std::cout << " - creating pipeline layout..." << std::endl;
-  	if (vkCreatePipelineLayout(test_device.get_device(), &pipeline_layout_info, nullptr, &pipeline_layout) != VK_SUCCESS) {
-  		std::cerr << "Failed to create pipeline layout" << std::endl;
-  	}
+      // top face (orange, remember y axis points down)
+      {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+      {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+      {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+      {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+      {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+      {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
 
-  	std::cout << " - generating default pipeline configuration info..." << std::endl;
- 	auto pipeline_config = GraphicsPipeline::default_pipeline_info(test_swap.get_swap_extent());
-  	pipeline_config.render_pass = test_swap.get_render_pass();
-  	pipeline_config.pipeline_layout = pipeline_layout;
-  	test_pipeline = std::make_unique<GraphicsPipeline>(test_device, pipeline_config);
+      // bottom face (red)
+      {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+      {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+      {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
+      {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+      {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+      {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+
+      // nose face (blue)
+      {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+      {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+      {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+      {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+      {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+      {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+
+      // tail face (green)
+      {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+      {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+      {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+      {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+      {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+      {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+
+  };
+  for (auto& v : vertices) {
+    v.position += offset;
+  }
+  return std::make_unique<GameModel>(device, vertices);
 }
 
-
-void TestGame::create_command_buffer(){
-  command_buffer.resize(test_swap.get_image_count());
-
-  VkCommandBufferAllocateInfo allocate_info{};
-  allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocate_info.commandPool = test_device.get_command_pool();
-  allocate_info.commandBufferCount = static_cast<uint32_t>(command_buffer.size());
-
-  if (vkAllocateCommandBuffers(test_device.get_device(), &allocate_info, command_buffer.data()) !=
-      VK_SUCCESS) {
-  }
-
-  for (int i = 0; i < command_buffer.size(); i++) {
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    if (vkBeginCommandBuffer(command_buffer[i], &beginInfo) != VK_SUCCESS) {
-    	std::cerr << "Failed to begin creating command_buffer" << std::endl;
-    }
-
-    VkRenderPassBeginInfo render_pass_info{};
-    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_info.renderPass = test_swap.get_render_pass();
-    render_pass_info.framebuffer = test_swap.get_framebuffers(i);
-
-    render_pass_info.renderArea.offset = {0, 0};
-    render_pass_info.renderArea.extent = test_swap.get_swap_extent();
-
-    std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
-    clear_values[1].depthStencil = {1.0f, 0};
-    render_pass_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-    render_pass_info.pClearValues = clear_values.data();
-
-    vkCmdBeginRenderPass(command_buffer[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
-
-    auto projection_view = test_camera.get_projection_matrix() * test_camera.get_view_matrix();
-
-    for (auto &object : game_objects) {
-      object.transform.rotation.y = glm::mod(object.transform.rotation.y + 0.01f, glm::two_pi<float>());
-      object.transform.rotation.x = glm::mod(object.transform.rotation.x + 0.005f, glm::two_pi<float>());
-
-      push_constant_data push{};
-      push.color = object.color;
-      push.transform = projection_view * object.transform.mat4();
-
-      vkCmdPushConstants(command_buffer[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                         0, sizeof(push_constant_data), &push);
-
-      test_pipeline->bind(command_buffer[i]);
-      vkCmdDraw(command_buffer[i], 3, 1, 0, 0);
-    }
-
-    vkCmdEndRenderPass(command_buffer[i]);
-    if (vkEndCommandBuffer(command_buffer[i]) != VK_SUCCESS) {
-    	std::cerr << "Failed to end command buffer" << std::endl;
-    }
-  }
-	
-}
-
-void TestGame::draw_frame() {
-  uint32_t image_index;
-
-  std::cout << "Attempting to acquire next image..." << std::endl;
-  auto result = test_swap.acquire_next_image(&image_index);
-  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-  	std::cerr << "Failed to acquire next image" << std::endl;
-  }
-
-  result = test_swap.submit_command_buffers(&command_buffer[image_index], &image_index);
-  if (result != VK_SUCCESS) {
-  	std::cerr << "Failed to submit command buffer" << std::endl;
-  }
+void TestGame::load_game_objects() {
+  std::cout << "Attempting to create cube..." << std::endl;
+  std::shared_ptr<GameModel> model = create_cube_model(test_device, {.0f, .0f, .0f});
+  auto cube = GameObject::create_game_object();
+  cube.model = model;
+  cube.transform.translation = {.0f, .0f, 2.5f};
+  cube.transform.scale = {.5f, .5f, .5f};
+  game_objects.push_back(std::move(cube));
+  std::cout << " - cube creation successful!" << std::endl;
 }
 
 
 TestGame::~TestGame() {
-	vkDestroyPipelineLayout(test_device.get_device(), pipeline_layout, nullptr);
+	
 }

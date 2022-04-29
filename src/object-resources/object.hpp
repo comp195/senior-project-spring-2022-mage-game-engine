@@ -1,5 +1,6 @@
 #pragma once
 
+#include "model.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 
@@ -43,14 +44,15 @@ namespace mage {
 
 	class GameObject{
 		private:
-			GameObject(unsigned int id);
-			~GameObject();
 			unsigned int object_id;
 		public:
+			GameObject(unsigned int id);
+			~GameObject();
 			static GameObject create_game_object();
 			unsigned int get_object_id() {return object_id;};
 			tranform_components transform;
 			glm::vec3 color{};
+			std::shared_ptr<GameModel> model{};
 	};
 
 }

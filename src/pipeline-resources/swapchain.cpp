@@ -26,6 +26,17 @@ SwapChainHandling::SwapChainHandling(DeviceHandling &device_pass, VkExtent2D ext
 	std:: cout << "=== SWAP CHAIN HANDLING SUCCESSFUL ===" << std::endl;
 }
 
+SwapChainHandling::SwapChainHandling(DeviceHandling &device_pass, VkExtent2D extent_pass, std::shared_ptr<SwapChainHandling> previous) : device{device_pass}, window_extent{extent_pass} {
+	std::cout << std::endl << "=== SWAP CHAIN HANDLING ===" << std::endl;
+	create_swap_chain();
+	create_image_views();
+	create_render_pass();
+	create_depth_resources();
+	create_framebuffers();
+	create_sync_objects();	
+	std:: cout << "=== SWAP CHAIN HANDLING SUCCESSFUL ===" << std::endl;
+}
+
 
 // Fully create swap chain
 void SwapChainHandling::create_swap_chain() {
@@ -243,6 +254,7 @@ void SwapChainHandling::create_depth_resources(){
 
 	std::cout << " - addressing depth format..." << std::endl;
 	VkFormat depth_format = find_depth_format();
+	swap_depth_format = depth_format;
   depth_images.resize(swap_images.size());
   depth_images_memories.resize(swap_images.size());
   depth_images_views.resize(swap_images.size());
