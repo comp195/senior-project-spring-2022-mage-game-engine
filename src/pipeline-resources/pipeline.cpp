@@ -69,7 +69,7 @@ void GraphicsPipeline::create_pipeline(const PipelineInfo config_info){
 	pipe_info.pMultisampleState = &config_info.multisample_info;
 	pipe_info.pColorBlendState = &config_info.color_blend_info;
 	pipe_info.pDepthStencilState = &config_info.depth_stencil_info;
-	pipe_info.pDynamicState = nullptr;
+	pipe_info.pDynamicState = &config_info.dynamic_state_info;
 
 	pipe_info.layout = config_info.pipeline_layout;
 	pipe_info.renderPass = config_info.render_pass;
@@ -195,6 +195,13 @@ void GraphicsPipeline::default_pipeline_info(PipelineInfo &config_info){
 	config_info.depth_stencil_info.stencilTestEnable = VK_FALSE;
 	config_info.depth_stencil_info.front = {};  
   	config_info.depth_stencil_info.back = {};   
+
+  	std::cout << "   - dynamic_state info..." << std::endl;
+	config_info.dynamic_state_enable = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	config_info.dynamic_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	config_info.dynamic_state_info.pDynamicStates = config_info.dynamic_state_enable.data();
+	config_info.dynamic_state_info.dynamicStateCount = static_cast<uint32_t>(config_info.dynamic_state_enable.size());
+	config_info.dynamic_state_info.flags = 0;
 }
 
 void GraphicsPipeline::bind(VkCommandBuffer command_buffer) {

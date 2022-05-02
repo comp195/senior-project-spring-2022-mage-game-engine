@@ -31,7 +31,7 @@ void TestGame::run() {
   std::cout << " - handling pipeline creation to transport..." << std::endl;
   TransportPass test_transport{test_device, test_artist.get_swapchain_render_pass()};
   std::cout << " - initializing camera..." << std::endl;
-  test_camera.set_view_direction(glm::vec3{0.f}, glm::vec3{0.5f, 0.f, 1.f});
+  test_camera.set_view_target(glm::vec3(-1.f, -2.f, -2.f), glm::vec3(0.f, 0.f, 2.5f), glm::vec3{0.f, -1.f, 0.f});
 
 	while(!test_game.close_window()){
 		glfwPollEvents();
