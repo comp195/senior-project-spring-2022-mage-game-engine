@@ -18,8 +18,8 @@ namespace mage{
 			uint32_t vertex_count;
 		public:
 			struct Vertex {
-				glm::vec3 position;
-				glm::vec3 color;
+				glm::vec3 position{};
+				glm::vec3 color{};
 				static std::vector<VkVertexInputBindingDescription> get_binding_descriptions(){
 					std::vector<VkVertexInputBindingDescription> binding_descriptions(1);
 					binding_descriptions[0].binding = 0;

@@ -52,6 +52,13 @@ namespace mage {
 		void check_glfw_extensions();
 		std::vector<const char*> get_required_extensions();
 		void create_command_pool();
+		uint32_t find_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+		void create_buffer(
+		    VkDeviceSize size,
+		    VkBufferUsageFlags usage,
+		    VkMemoryPropertyFlags properties,
+		    VkBuffer &buffer,
+		    VkDeviceMemory &bufferMemory);
 
 		VkCommandPool get_command_pool(){return command_pool;}
 		VkQueue get_graphics_queue(){return graphics_queue;}

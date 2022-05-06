@@ -317,12 +317,14 @@ void SwapChainHandling::create_image(const VkImageCreateInfo &image_info, VkMemo
 	if (vkAllocateMemory(device.get_device(), &allocate_info, nullptr, &image_memory) != VK_SUCCESS) {
   	std::cerr << "Failed to allocate image memory" << std::endl;
   	exit(EXIT_FAILURE);
-  } else if (vkBindImageMemory(device.get_device(), image, image_memory, 0) != VK_SUCCESS) {
+  } 
+
+  if (vkBindImageMemory(device.get_device(), image, image_memory, 0) != VK_SUCCESS) {
     std::cerr << "Failed to bind image memory" << std::endl;
   	exit(EXIT_FAILURE);
-  } else {
-  	std::cout << "   - image creation and memory allocation successful!" << std::endl;
   }
+
+  std::cout << "   - image creation and memory allocation successful!" << std::endl;
 }
 
 

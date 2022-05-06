@@ -30,10 +30,10 @@ namespace mage {
 		void create_pipeline();
 		void create_swapchain();
 
-		bool is_frame_in_progres() const {return frame_started;};
-		VkCommandBuffer get_current_command_buffer() const {return command_buffer[current_frame];};
-		VkRenderPass get_swapchain_render_pass() const {return swapchain->get_render_pass();};
-		float get_aspect_ratio() const { return (swapchain->get_swap_extent().width / swapchain->get_swap_extent().height);};
+		bool is_frame_in_progres() const {return frame_started;}
+		VkCommandBuffer get_current_command_buffer() const {return command_buffer[current_frame];}
+		VkRenderPass get_swapchain_render_pass() const {return swapchain->get_render_pass();}
+		float get_aspect_ratio() const { return (swapchain->get_swap_extent().width / swapchain->get_swap_extent().height);}
 	};
 
 }

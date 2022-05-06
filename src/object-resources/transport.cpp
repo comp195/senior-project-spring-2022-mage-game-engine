@@ -60,13 +60,14 @@ void TransportPass::create_pipeline(VkRenderPass render_pass){
 }
 
 void TransportPass::render_game_objects(VkCommandBuffer command_buffer, std::vector<GameObject> &game_objects, const CameraHandling &camera){
+	std::cout << " - rendering game object..." << std::endl;
 	pipeline->bind(command_buffer);
 
 	auto projection_view = camera.get_projection_matrix() * camera.get_view_matrix();
 
 	for (auto& object : game_objects){
-		object.transform.rotation.y = glm::mod(object.transform.rotation.y + 0.01f, glm::two_pi<float>());
-		object.transform.rotation.x = glm::mod(object.transform.rotation.x + 0.01f, glm::two_pi<float>());
+		object.transform.rotation.y = glm::mod(object.transform.rotation.y + 0.0003f, glm::two_pi<float>());
+		object.transform.rotation.x = glm::mod(object.transform.rotation.x + 0.00003f, glm::two_pi<float>());
 
 		push_constant_data push{};
 		push.color = object.color;
