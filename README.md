@@ -2,6 +2,8 @@
 
 _MAGE_ (MAGE Amazing Game Engine) is the final senior project of Jordan Scharkey. It is a Vulkan-based, 3D game engine written primarily in C++.
 
+![](https://i.imgur.com/OzLyklL.png)
+
 ## Dependencies
 
 #### Vulkan [[Windows](https://vulkan.lunarg.com/) / [Linux](https://vulkan-tutorial.com/Development_environment#page_Vulkan-Packages)]
@@ -52,9 +54,8 @@ I hope to achieve the following milestones before my Senior Project Day:
 
 * ~~Create a window~~
 * ~~R̶e̶n̶d̶e̶r̶ ̶a̶ ̶s̶i̶m̶p̶l̶e̶ ̶t̶r̶i̶a̶n̶g̶l̶e̶~~
-* Render a cube
-* Add camera and respond to user input
-* Create a basic tutorial displaying the above features
+* Render a cube (incomplete)
+* ~~Add camera~~
 
 I also hope to achieve this with as much cross-platform support as possible, but seeing as I'm developing on an NVIDIA-driven Linux machine, these particular systems will recieve precidence if time becomes an issue.
 
