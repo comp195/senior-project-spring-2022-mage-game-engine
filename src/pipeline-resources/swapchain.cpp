@@ -131,11 +131,10 @@ VkExtent2D SwapChainHandling::choose_swap_extent(const VkSurfaceCapabilitiesKHR&
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 		return capabilities.currentExtent;
 	} else {
-		int width, height;
-		VkExtent2D actual_extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
-		actual_extent.width = std::clamp(actual_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-		actual_extent.height = std::clamp(actual_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-		return actual_extent;
+        VkExtent2D actual_extent = window_extent;
+        actual_extent.width = std::max(capabilities.minImageExtent.width, actual_extent.width);
+        actual_extent.height = std::max(capabilities.minImageExtent.height, actual_extent.height);
+        return actual_extent;
 	}
 }
 
